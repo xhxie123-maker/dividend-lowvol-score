@@ -1,55 +1,73 @@
 {
-  "updated": "2026-11-14",
-  "timezone": "Asia/Shanghai",
   "benchmark": {
+    "code": "000300",
     "name": "沪深300",
-    "secid": "1.000300",
-    "code": "000300"
+    "secid": "1.000300"
   },
   "etfs": [
     {
       "code": "515450",
       "secid": "1.515450",
-      "name": "红利低波50ETF南方",
+      "name": "南方标普中国A股大盘红利低波50ETF",
       "short": "南方红利低波",
-      "fund": "南方标普中国A股大盘红利低波50ETF",
       "index": "标普中国A股大盘红利低波50指数",
-      "manager_fee": 0.50,
-      "custody_fee": 0.10,
-      "listed": "2020-01-17"
+      "fund": "南方基金管理股份有限公司",
+      "manager_fee": 0.005,
+      "custody_fee": 0.001,
+      "listed": "2020-01-20"
     },
     {
       "code": "563020",
       "secid": "1.563020",
-      "name": "红利低波ETF易方达",
+      "name": "易方达中证红利低波动ETF",
       "short": "易方达红利低波",
-      "fund": "易方达中证红利低波动ETF",
-      "index": "中证红利低波动指数 (H30269)",
-      "manager_fee": 0.15,
-      "custody_fee": 0.05,
-      "listed": "2023-12-06"
+      "index": "中证红利低波动指数（H30269）",
+      "fund": "易方达基金管理有限公司",
+      "manager_fee": 0.0015,
+      "custody_fee": 0.0005,
+      "listed": "2023-12-15"
     }
   ],
   "weights": {
-    "trend": 25,
-    "momentum": 20,
-    "volatility": 20,
-    "drawdown": 15,
-    "valuation": 10,
-    "dividend": 5,
-    "trading": 5
+    "div_attraction": 20,
+    "div_quality": 20,
+    "low_risk": 20,
+    "valuation": 15,
+    "financial": 15,
+    "market_env": 10
+  },
+  "windows": {
+    "percentile_window": 1250,
+    "short_window": 250,
+    "backfill_days": 260,
+    "nav_lookback_days": 1650
   },
   "rating_bands": [
-    { "min": 80, "label": "强势", "action": "趋势与风险结构均优，可持有并考虑逢低加仓" },
-    { "min": 65, "label": "偏强", "action": "结构健康，持有为主，回撤加深可分批定投" },
-    { "min": 50, "label": "中性", "action": "多空交织，观察为主，控制新增仓位节奏" },
-    { "min": 35, "label": "偏弱", "action": "结构转弱，宜减仓或暂缓新增，等待修复" },
-    { "min": 0, "label": "弱势", "action": "趋势与波动同时恶化，优先回避" }
+    {
+      "min": 85,
+      "label": "非常有吸引力",
+      "action": "股息质量较高、估值合理、风险可控，可按计划提高配置比例"
+    },
+    {
+      "min": 70,
+      "label": "较有吸引力",
+      "action": "具备配置价值，可分批配置，不宜一次性打满"
+    },
+    {
+      "min": 60,
+      "label": "中性偏积极",
+      "action": "关注估值与市场环境，控制配置节奏"
+    },
+    {
+      "min": 40,
+      "label": "中性偏谨慎",
+      "action": "等待更好的配置机会，已有仓位维持观察"
+    },
+    {
+      "min": 0,
+      "label": "吸引力较低",
+      "action": "谨慎配置，排查风险因素后再说"
+    }
   ],
-  "windows": {
-    "valuation_days": 750,
-    "history_days": 250,
-    "backfill_days": 260,
-    "nav_lookback_days": 1000
-  }
+  "bond_10y_yield": null
 }
