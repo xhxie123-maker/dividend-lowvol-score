@@ -1,0 +1,648 @@
+{
+  "run_at": "2026-11-14 20:48",
+  "data_date": "2026-11-13",
+  "etfs": [
+    {
+      "code": "515450",
+      "name": "南方标普中国A股大盘红利低波50ETF",
+      "short": "南方红利低波",
+      "index": "标普中国A股大盘红利低波50指数",
+      "score": 58.6,
+      "rating": "中性偏谨慎",
+      "coverage": 0.85,
+      "dimensions": [
+        {
+          "key": "div_attraction",
+          "name": "股息吸引力",
+          "weight": 20,
+          "score": 59.14,
+          "coverage": 0.75,
+          "subs": [
+            {
+              "key": "cur_yield",
+              "name": "当前股息率",
+              "weight": 6,
+              "status": "live",
+              "score": 80.4
+            },
+            {
+              "key": "avg3_yield",
+              "name": "3 年平均股息率",
+              "weight": 5,
+              "status": "live",
+              "score": 46.95
+            },
+            {
+              "key": "yield_pct5",
+              "name": "股息率历史分位数",
+              "weight": 4,
+              "status": "live",
+              "score": 42.5
+            },
+            {
+              "key": "spread",
+              "name": "股债收益差",
+              "weight": 3,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "fwd_yield",
+              "name": "预期股息率",
+              "weight": 2,
+              "status": "missing",
+              "score": null
+            }
+          ]
+        },
+        {
+          "key": "div_quality",
+          "name": "分红质量与可持续性",
+          "weight": 20,
+          "score": 67.27,
+          "coverage": 0.55,
+          "subs": [
+            {
+              "key": "consec_years",
+              "name": "连续现金分红年限",
+              "weight": 4,
+              "status": "live",
+              "score": 85.0
+            },
+            {
+              "key": "payout",
+              "name": "现金分红支付率",
+              "weight": 4,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "fcf_cover",
+              "name": "自由现金流覆盖率",
+              "weight": 5,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "dps_growth",
+              "name": "每股股息增长率",
+              "weight": 4,
+              "status": "live",
+              "score": 100.0
+            },
+            {
+              "key": "stability",
+              "name": "分红稳定性",
+              "weight": 3,
+              "status": "live",
+              "score": 0.0
+            }
+          ]
+        },
+        {
+          "key": "low_risk",
+          "name": "低波动与风险控制",
+          "weight": 20,
+          "score": 73.33,
+          "coverage": 1.0,
+          "subs": [
+            {
+              "key": "vol20",
+              "name": "20 日年化波动率",
+              "weight": 3,
+              "status": "live",
+              "score": 54.72
+            },
+            {
+              "key": "vol60",
+              "name": "60 日年化波动率",
+              "weight": 4,
+              "status": "live",
+              "score": 84.24
+            },
+            {
+              "key": "vol120",
+              "name": "120 日年化波动率",
+              "weight": 4,
+              "status": "live",
+              "score": 71.04
+            },
+            {
+              "key": "vol250",
+              "name": "250 日年化波动率",
+              "weight": 3,
+              "status": "live",
+              "score": 81.52
+            },
+            {
+              "key": "mdd250",
+              "name": "最大回撤",
+              "weight": 4,
+              "status": "live",
+              "score": 63.76
+            },
+            {
+              "key": "downside",
+              "name": "下行波动率",
+              "weight": 2,
+              "status": "live",
+              "score": 90.88
+            }
+          ]
+        },
+        {
+          "key": "valuation",
+          "name": "估值合理性",
+          "weight": 15,
+          "score": 23.25,
+          "coverage": 0.533,
+          "subs": [
+            {
+              "key": "pe_pct",
+              "name": "PE 历史分位数",
+              "weight": 4,
+              "status": "proxy",
+              "score": 4.0
+            },
+            {
+              "key": "pb_pct",
+              "name": "PB 历史分位数",
+              "weight": 4,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "yield_pct_val",
+              "name": "股息率历史分位数",
+              "weight": 4,
+              "status": "live",
+              "score": 42.5
+            },
+            {
+              "key": "erp",
+              "name": "股权风险溢价",
+              "weight": 3,
+              "status": "missing",
+              "score": null
+            }
+          ]
+        },
+        {
+          "key": "financial",
+          "name": "盈利与财务质量",
+          "weight": 15,
+          "score": null,
+          "coverage": 0.0,
+          "subs": [
+            {
+              "key": "roe",
+              "name": "ROE",
+              "weight": 3,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "roic",
+              "name": "ROIC",
+              "weight": 3,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "ocf_np",
+              "name": "经营现金流/净利润",
+              "weight": 3,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "debt_ratio",
+              "name": "资产负债率",
+              "weight": 2,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "np_stability",
+              "name": "净利润增长稳定性",
+              "weight": 2,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "interest_cover",
+              "name": "利息保障倍数",
+              "weight": 2,
+              "status": "missing",
+              "score": null
+            }
+          ]
+        },
+        {
+          "key": "market_env",
+          "name": "市场环境与资金趋势",
+          "weight": 10,
+          "score": 63.72,
+          "coverage": 0.4,
+          "subs": [
+            {
+              "key": "bond10y",
+              "name": "10 年期国债收益率",
+              "weight": 2,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "rs",
+              "name": "红利低波相对强弱",
+              "weight": 2,
+              "status": "live",
+              "score": 95.76
+            },
+            {
+              "key": "flow",
+              "name": "ETF 资金流向",
+              "weight": 2,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "mkt_vol",
+              "name": "市场整体波动率",
+              "weight": 2,
+              "status": "live",
+              "score": 31.68
+            },
+            {
+              "key": "crowding",
+              "name": "红利风格拥挤度",
+              "weight": 2,
+              "status": "missing",
+              "score": null
+            }
+          ]
+        }
+      ],
+      "alerts": [
+        {
+          "level": "中",
+          "title": "最大回撤恶化",
+          "detail": "250 日区间最大回撤 -11.02%，超过 -10% 观察线"
+        }
+      ],
+      "metrics": {
+        "date": "2026-11-13",
+        "close": 1.461,
+        "close_raw": 1.461,
+        "amount": 278590804.0,
+        "nav": 1.4631,
+        "nav_date": "2026-11-13",
+        "premium": -0.00144,
+        "ttm_div": 0.08,
+        "ttm_yield": 0.05476,
+        "vol20": 0.14752,
+        "vol60": 0.1117,
+        "vol120": 0.13989,
+        "vol250": 0.12362,
+        "downside250": 0.07732,
+        "mdd250": -0.11017,
+        "dd250": -0.00341,
+        "r20": 0.02454,
+        "r60": 0.07426,
+        "amount20": 247317478.5,
+        "shares": 13975334912.0,
+        "flow20": null,
+        "bond10y": null,
+        "yield_avg3": 0.0781,
+        "yield_pct5": 42.49714,
+        "consec_years": 5,
+        "dps_growth": 0.16961,
+        "div_cv": 0.41986,
+        "excess20": 0.06155,
+        "excess60": 0.21313,
+        "mkt_vol": 0.1695
+      }
+    },
+    {
+      "code": "563020",
+      "name": "易方达中证红利低波动ETF",
+      "short": "易方达红利低波",
+      "index": "中证红利低波动指数（H30269）",
+      "score": 58.18,
+      "rating": "中性偏谨慎",
+      "coverage": 0.85,
+      "dimensions": [
+        {
+          "key": "div_attraction",
+          "name": "股息吸引力",
+          "weight": 20,
+          "score": 57.26,
+          "coverage": 0.75,
+          "subs": [
+            {
+              "key": "cur_yield",
+              "name": "当前股息率",
+              "weight": 6,
+              "status": "live",
+              "score": 52.8
+            },
+            {
+              "key": "avg3_yield",
+              "name": "3 年平均股息率",
+              "weight": 5,
+              "status": "live",
+              "score": 66.38
+            },
+            {
+              "key": "yield_pct5",
+              "name": "股息率历史分位数",
+              "weight": 4,
+              "status": "live",
+              "score": 52.55
+            },
+            {
+              "key": "spread",
+              "name": "股债收益差",
+              "weight": 3,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "fwd_yield",
+              "name": "预期股息率",
+              "weight": 2,
+              "status": "missing",
+              "score": null
+            }
+          ]
+        },
+        {
+          "key": "div_quality",
+          "name": "分红质量与可持续性",
+          "weight": 20,
+          "score": 81.65,
+          "coverage": 0.55,
+          "subs": [
+            {
+              "key": "consec_years",
+              "name": "连续现金分红年限",
+              "weight": 4,
+              "status": "live",
+              "score": 70.0
+            },
+            {
+              "key": "payout",
+              "name": "现金分红支付率",
+              "weight": 4,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "fcf_cover",
+              "name": "自由现金流覆盖率",
+              "weight": 5,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "dps_growth",
+              "name": "每股股息增长率",
+              "weight": 4,
+              "status": "live",
+              "score": 100.0
+            },
+            {
+              "key": "stability",
+              "name": "分红稳定性",
+              "weight": 3,
+              "status": "live",
+              "score": 72.7
+            }
+          ]
+        },
+        {
+          "key": "low_risk",
+          "name": "低波动与风险控制",
+          "weight": 20,
+          "score": 50.7,
+          "coverage": 1.0,
+          "subs": [
+            {
+              "key": "vol20",
+              "name": "20 日年化波动率",
+              "weight": 3,
+              "status": "live",
+              "score": 37.66
+            },
+            {
+              "key": "vol60",
+              "name": "60 日年化波动率",
+              "weight": 4,
+              "status": "live",
+              "score": 69.3
+            },
+            {
+              "key": "vol120",
+              "name": "120 日年化波动率",
+              "weight": 4,
+              "status": "live",
+              "score": 34.19
+            },
+            {
+              "key": "vol250",
+              "name": "250 日年化波动率",
+              "weight": 3,
+              "status": "live",
+              "score": 44.84
+            },
+            {
+              "key": "mdd250",
+              "name": "最大回撤",
+              "weight": 4,
+              "status": "live",
+              "score": 43.86
+            },
+            {
+              "key": "downside",
+              "name": "下行波动率",
+              "weight": 2,
+              "status": "live",
+              "score": 88.57
+            }
+          ]
+        },
+        {
+          "key": "valuation",
+          "name": "估值合理性",
+          "weight": 15,
+          "score": 32.8,
+          "coverage": 0.533,
+          "subs": [
+            {
+              "key": "pe_pct",
+              "name": "PE 历史分位数",
+              "weight": 4,
+              "status": "proxy",
+              "score": 13.05
+            },
+            {
+              "key": "pb_pct",
+              "name": "PB 历史分位数",
+              "weight": 4,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "yield_pct_val",
+              "name": "股息率历史分位数",
+              "weight": 4,
+              "status": "live",
+              "score": 52.55
+            },
+            {
+              "key": "erp",
+              "name": "股权风险溢价",
+              "weight": 3,
+              "status": "missing",
+              "score": null
+            }
+          ]
+        },
+        {
+          "key": "financial",
+          "name": "盈利与财务质量",
+          "weight": 15,
+          "score": null,
+          "coverage": 0.0,
+          "subs": [
+            {
+              "key": "roe",
+              "name": "ROE",
+              "weight": 3,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "roic",
+              "name": "ROIC",
+              "weight": 3,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "ocf_np",
+              "name": "经营现金流/净利润",
+              "weight": 3,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "debt_ratio",
+              "name": "资产负债率",
+              "weight": 2,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "np_stability",
+              "name": "净利润增长稳定性",
+              "weight": 2,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "interest_cover",
+              "name": "利息保障倍数",
+              "weight": 2,
+              "status": "missing",
+              "score": null
+            }
+          ]
+        },
+        {
+          "key": "market_env",
+          "name": "市场环境与资金趋势",
+          "weight": 10,
+          "score": 66.14,
+          "coverage": 0.4,
+          "subs": [
+            {
+              "key": "bond10y",
+              "name": "10 年期国债收益率",
+              "weight": 2,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "rs",
+              "name": "红利低波相对强弱",
+              "weight": 2,
+              "status": "live",
+              "score": 97.52
+            },
+            {
+              "key": "flow",
+              "name": "ETF 资金流向",
+              "weight": 2,
+              "status": "missing",
+              "score": null
+            },
+            {
+              "key": "mkt_vol",
+              "name": "市场整体波动率",
+              "weight": 2,
+              "status": "live",
+              "score": 34.75
+            },
+            {
+              "key": "crowding",
+              "name": "红利风格拥挤度",
+              "weight": 2,
+              "status": "missing",
+              "score": null
+            }
+          ]
+        }
+      ],
+      "alerts": [
+        {
+          "level": "中",
+          "title": "最大回撤恶化",
+          "detail": "250 日区间最大回撤 -14.58%，超过 -10% 观察线"
+        }
+      ],
+      "metrics": {
+        "date": "2026-11-13",
+        "close": 1.221,
+        "close_raw": 1.221,
+        "amount": 742111032.0,
+        "nav": 1.2214,
+        "nav_date": "2026-11-13",
+        "premium": -0.00033,
+        "ttm_div": 0.048,
+        "ttm_yield": 0.03931,
+        "vol20": 0.14611,
+        "vol60": 0.12142,
+        "vol120": 0.14476,
+        "vol250": 0.12697,
+        "downside250": 0.08069,
+        "mdd250": -0.14577,
+        "dd250": -0.0057,
+        "r20": 0.0175,
+        "r60": 0.07293,
+        "amount20": 500690020.75,
+        "shares": 11585910016.0,
+        "flow20": null,
+        "bond10y": null,
+        "yield_avg3": 0.03925,
+        "yield_pct5": 52.55319,
+        "consec_years": 3,
+        "dps_growth": 0.33284,
+        "div_cv": 0.0819,
+        "excess20": 0.0545,
+        "excess60": 0.2118,
+        "mkt_vol": 0.1695
+      }
+    }
+  ]
+}
