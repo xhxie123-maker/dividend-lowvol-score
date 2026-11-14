@@ -1,0 +1,47 @@
+name: 每日红利低波评分
+
+on:
+  schedule:
+    # UTC 00:20 = 北京时间 08:20，周一至周五
+    - cron: "20 0 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dividend-lowvol-score
+  cancel-in-progress: false
+
+jobs:
+  score:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 计算评分并生成日志与看板
+        run: python dividend_lowvol_score.py
+
+      - name: 提交产物
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "本次运行无变更，跳过提交"
+          else
+            git commit -m "chore: 每日评分更新 $(TZ=Asia/Shanghai date +%F)"
+            git push
+          fi
+
+      - name: 运行摘要
+        run: |
+          echo "### 最新评分" >> $GITHUB_STEP_SUMMARY
+          tail -n 2 data/daily_scores.csv >> $GITHUB_STEP_SUMMARY
