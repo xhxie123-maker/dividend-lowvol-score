@@ -701,7 +701,7 @@ def write_log(all_series, data_date, run_at, errors):
         add("- 估值位置：价格处于近 {} 日区间 {} 分位；股息率处于近 {} 日 {} 分位".format(
             row.get("val_window_n"), num(row["val_pct"], 0),
             row.get("val_window_n"), num(row.get("div_yield_pct"), 0)))
-        add("- 折溢价：当日 {}，近 20 日均值 {}".format(pct(row.get("premium")), pct(row.get("premium20")))
+        add("- 折溢价：当日 {}，近 20 日均值 {}".format(pct(row.get("premium")), pct(row.get("premium20"))))
         add("- 近 12 个月现金分红率：{}（每份合计 {} 元）".format(
             pct(row.get("ttm_div_yield")), num(row.get("ttm_div"), 4)))
         add("- 20 日均成交额 {} 亿元，当日成交额 / 60 日均值 {} 倍".format(
