@@ -4,3 +4,4 @@
 {"run_at": "2026-11-17 15:58", "data_date": "2026-11-17", "etfs": [{"code": "515450", "score": 56.16, "coverage": 0.85}, {"code": "563020", "score": 55.55, "coverage": 0.85}], "errors": ["10 年期国债收益率未接入（股债收益差、股权风险溢价、利率三项按缺失处理）"]}
 {"run_at": "2026-11-17 16:48", "data_date": "2026-11-17", "etfs": [{"code": "515450", "score": 51.15, "coverage": 0.89}, {"code": "563020", "score": 56.94, "coverage": 0.92}], "errors": []}
 {"run_at": "2026-11-17 17:19", "data_date": "2026-11-17", "etfs": [{"code": "515450", "score": 51.15, "coverage": 0.89}, {"code": "563020", "score": 56.94, "coverage": 0.92}], "errors": []}
+{"run_at": "2026-11-17 19:20", "data_date": "2026-11-17", "etfs": [{"code": "515450", "score": 51.22, "coverage": 0.89}, {"code": "563020", "score": 57.07, "coverage": 0.92}], "errors": []}

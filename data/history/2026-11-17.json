@@ -1,5 +1,5 @@
 {
-  "run_at": "2026-11-17 17:19",
+  "run_at": "2026-11-17 19:20",
   "data_date": "2026-11-17",
   "etfs": [
     {
@@ -7,7 +7,7 @@
       "name": "南方标普中国A股大盘红利低波50ETF",
       "short": "南方红利低波",
       "index": "标普中国A股大盘红利低波50指数",
-      "score": 51.15,
+      "score": 51.22,
       "rating": "中性偏谨慎",
       "coverage": 0.89,
       "data_date": "2026-11-17",
@@ -21,7 +21,7 @@
           "key": "div_attraction",
           "name": "股息吸引力",
           "weight": 20,
-          "score": 50.8,
+          "score": 50.83,
           "coverage": 1.0,
           "subs": [
             {
@@ -50,7 +50,7 @@
               "name": "股债收益差",
               "weight": 3,
               "status": "live",
-              "score": 43.54
+              "score": 43.76
             },
             {
               "key": "fwd_yield",
@@ -248,7 +248,7 @@
           "key": "market_env",
           "name": "市场环境与资金趋势",
           "weight": 10,
-          "score": 56.95,
+          "score": 57.66,
           "coverage": 0.8,
           "subs": [
             {
@@ -256,7 +256,7 @@
               "name": "10 年期国债收益率",
               "weight": 2,
               "status": "live",
-              "score": 94.75
+              "score": 97.59
             },
             {
               "key": "rs",
@@ -317,7 +317,7 @@
         "r20": 0.04965,
         "r60": 0.112676,
         "amount20": 268906944.05,
-        "bond10y": 1.6285,
+        "bond10y": 1.6055,
         "bench_amount20": 465730186013.4551,
         "mkt_vol": 0.170739,
         "shares": 13962334976.0,
@@ -337,7 +337,7 @@
         "consec_years": 5,
         "dps_growth": 0.169607,
         "div_cv": 0.419862,
-        "spread": 0.037013,
+        "spread": 0.037243,
         "erp": null,
         "fwd_yield": 0.062337,
         "excess20": 0.091954,
@@ -349,7 +349,7 @@
       "name": "易方达中证红利低波动ETF",
       "short": "易方达红利低波",
       "index": "中证红利低波动指数（H30269）",
-      "score": 56.94,
+      "score": 57.07,
       "rating": "中性偏谨慎",
       "coverage": 0.92,
       "data_date": "2026-11-17",
@@ -363,7 +363,7 @@
           "key": "div_attraction",
           "name": "股息吸引力",
           "weight": 20,
-          "score": 54.32,
+          "score": 54.68,
           "coverage": 1.0,
           "subs": [
             {
@@ -392,7 +392,7 @@
               "name": "股债收益差",
               "weight": 3,
               "status": "live",
-              "score": 55.58
+              "score": 57.99
             },
             {
               "key": "fwd_yield",
@@ -502,7 +502,7 @@
           "key": "valuation",
           "name": "估值合理性",
           "weight": 15,
-          "score": 16.38,
+          "score": 16.32,
           "coverage": 0.733,
           "subs": [
             {
@@ -531,7 +531,7 @@
               "name": "股权风险溢价",
               "weight": 3,
               "status": "live",
-              "score": 0.44
+              "score": 0.22
             }
           ]
         },
@@ -590,7 +590,7 @@
           "key": "market_env",
           "name": "市场环境与资金趋势",
           "weight": 10,
-          "score": 57.39,
+          "score": 58.1,
           "coverage": 0.8,
           "subs": [
             {
@@ -598,7 +598,7 @@
               "name": "10 年期国债收益率",
               "weight": 2,
               "status": "live",
-              "score": 94.75
+              "score": 97.59
             },
             {
               "key": "rs",
@@ -659,12 +659,12 @@
         "r20": 0.032419,
         "r60": 0.092348,
         "amount20": 500904078.65,
-        "bond10y": 1.6285,
+        "bond10y": 1.6055,
         "bench_amount20": 465730186013.4551,
         "mkt_vol": 0.170739,
         "shares": 11454909952.0,
         "flow20": null,
-        "pe": 8.76,
+        "pe": 8.78,
         "fin_roe": 9.619497,
         "fin_roa": 2.399279,
         "fin_ocf_np": 4.466589,
@@ -679,8 +679,8 @@
         "consec_years": 3,
         "dps_growth": 0.331214,
         "div_cv": 0.081738,
-        "spread": 0.022362,
-        "erp": 0.09787,
+        "spread": 0.022592,
+        "erp": 0.09784,
         "fwd_yield": 0.050242,
         "excess20": 0.074723,
         "excess60": 0.253627
