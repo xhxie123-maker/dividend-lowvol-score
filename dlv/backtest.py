@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""回测：评分分档、四档操作建议、单因子分组、择时策略、组合对照、分段验证。
+"""回测：评分分档、五档操作建议、单因子分组、择时策略、组合对照、分段验证。
 
 样本限制（必须披露）：
   A 股 ETF 自 2020 年才有完整日线（563020 于 2023-12 上市），
@@ -103,7 +103,7 @@ def _summarize(label, items):
 
 
 # ---------------------------------------------------------------------------
-# 2) 四档操作建议 → 未来收益
+# 2) 五档操作建议 → 未来收益
 # ---------------------------------------------------------------------------
 def tier_stats(rows, tiers, horizons=(20, 60, 120)):
     out = {}
@@ -295,7 +295,7 @@ def write(root, all_series, bench, bands, data_date, tiers=None):
         for h, table in band_tbl.items():
             for row in table:
                 w.writerow({"h": h, "rating": row["label"], "n": row["n"], "excess": row["excess"],
-                            "win": row["win"], "best": row["best"], "worst": row["worst"]})
+                            "win": row["win"], "best": row["best"], "worst": row["worst"])
     with open(os.path.join(out_dir, "tier_stats.csv"), "w", encoding="utf-8", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=["h", "tier", "position", "n", "excess", "win", "best", "worst"])
         w.writeheader()
@@ -330,6 +330,11 @@ def write(root, all_series, bench, bands, data_date, tiers=None):
     t60 = tier_tbl.get(60) or []
     best60 = max(t60, key=lambda r: r["excess"]) if t60 else None
     worst60 = min(t60, key=lambda r: r["excess"]) if t60 else None
+    e_rows = {}
+    for h in (20, 60, 120):
+        for row in (tier_tbl.get(h) or []):
+            if str(row.get("label", "")).startswith("E 档"):
+                e_rows[h] = row
 
     L = []
 
@@ -359,9 +364,9 @@ def write(root, all_series, bench, bands, data_date, tiers=None):
         add()
     add("※ 样本数 < 30，统计意义不足，仅作方向参考。")
     add()
-    add("## 二、四档操作建议 vs 未来收益")
+    add("## 二、五档操作建议 vs 未来收益")
     add()
-    add("四档区间：{}（A 积极配置 / B 分批建仓 / C 持有观望 / D 低配等待）。".format(band_text(tiers)))
+    add("五档区间：{}（A 积极配置 / B 分批建仓 / C 持有观望 / D 低配等待 / E 强卖出信号）。".format(band_text(tiers)))
     add()
     for h, table in tier_tbl.items():
         add("**未来 {} 个交易日**".format(h))
@@ -376,8 +381,26 @@ def write(root, all_series, bench, bands, data_date, tiers=None):
         add()
     if best60 and worst60:
         add("读法：未来 60 日超额最高的是 {}（{:+.2%}），最低的是 {}（{:+.2%}）；"
-            "四档之间并不单调，因此四档只做温和仓位倾斜，不能反向使用（“低分反而加仓”）。".format(
+            "档位之间并不单调，因此 A–D 只做温和仓位倾斜，不能反向使用（“低分反而加仓”）。".format(
                 best60["label"], best60["excess"], worst60["label"], worst60["excess"]))
+    if e_rows:
+        add()
+        e_txt = "；".join("{} 日 {:+.2%}（胜率 {:.0%}、样本 {}）".format(
+            h, e_rows[h]["excess"], e_rows[h]["win"], e_rows[h]["n"])
+            for h in (20, 60, 120) if h in e_rows)
+        add("**E 档（强卖出）专项检验**：{}。".format(e_txt))
+        short_weak = 20 in e_rows and e_rows[20]["excess"] < 0
+        long_strong = 120 in e_rows and e_rows[120]["excess"] > 0
+        if short_weak and long_strong:
+            add("读法：E 档在 20 日维度确实最弱（超额为负、胜率不足五成），符合“短线减仓”的直觉；"
+                "但 60/120 日维度 E 档反而排在最前，说明极低评分更多是「跌深反弹」而非趋势性走弱。"
+                "因此 E 档只能当**短线与风控纪律**执行：触发后先降到 0–10%，不要因反弹立刻回补，"
+                "也不要把“强卖出”理解为长期看空——照此长持会踏空均值回归。")
+        elif short_weak:
+            add("读法：E 档在 20 日维度为负超额，符合“短线减仓”的直觉，但样本少且仅两只标的，仍需当纪律而非预测使用。")
+        else:
+            add("读法：E 档在 20 日维度并未跑输，说明该阈值在这段样本里不构成有效的卖出信号；"
+                "作为纪律可以保留，但不能当作收益预测。")
     add()
     add("## 三、单因子五分位（未来 60 日超额，Q5−Q1）")
     add()
@@ -430,8 +453,8 @@ def write(root, all_series, bench, bands, data_date, tiers=None):
     add("## 七、结论与使用边界")
     add()
     add("- 若某评级档的超额收益样本量 < 30，该档结论不具统计意义，只能看方向。")
-    add("- 四档区间固定为 A ≥70 / B 60–69 / C 45–59 / D <45，不按回测最优点调参；"
-        "四档只用于仓位纪律，不构成买卖信号。")
+    add("- 五档区间固定为 A ≥70 / B 60–69 / C 45–59 / D 35–44 / E <35，不按回测最优点调参；"
+        "A–D 只用于仓位纪律，不构成买卖信号；E 为纪律性减仓提示，阈值来自操作语义。")
     add("- 择时阈值在样本内挑出的最优值不应当直接使用；上表同时给出 45–70 全网格，用于观察稳健性。")
     add("- 权重仍是金融逻辑给定，回测只用于验证方向与稳定性，不做权重再优化（样本太短，优化必然过拟合）。")
     add("- 后续可扩展：2015 年起的指数层（H30269 / 标普红利低波）日线 + 成分股历史财报，可把样本拉到 10 年。")
