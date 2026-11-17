@@ -52,7 +52,8 @@ def main():
 
     cfg = load_config()
     windows = cfg["windows"]
-    report.set_globals(cfg["rating_bands"])
+    tiers = cfg.get("action_tiers")
+    report.set_globals(cfg["rating_bands"], tiers)
     fetcher = feed.Fetcher(ROOT, offline=args.offline, refresh_days=args.refresh_days)
 
     now = datetime.now(feed.CST)
@@ -155,7 +156,7 @@ def main():
 
     if args.backtest:
         try:
-            path = bt.write(ROOT, all_series, bench, cfg["rating_bands"], data_date)[0]
+            path = bt.write(ROOT, all_series, bench, cfg["rating_bands"], data_date, tiers)[0]
             print("[OK] 回测报告 {}".format(os.path.relpath(path, ROOT)), flush=True)
         except Exception as exc:
             errors.append("回测失败：{}".format(exc))
