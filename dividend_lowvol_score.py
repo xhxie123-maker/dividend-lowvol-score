@@ -447,6 +447,7 @@ STATUS_LABEL = {"live": "已实现", "proxy": "代理", "missing": "待接入"}
 
 
 def score_series(series, bench_closes):
+    """按六维模型逐日打分。"""
     win = CONFIG["windows"]["percentile_window"]
     short = CONFIG["windows"]["short_window"]
 
@@ -969,7 +970,7 @@ h3{font-size:15px;margin:26px 0 10px}
 <body>
 <div class="wrap">
 <h1>红利低波 ETF 监测评分</h1>
-<p class="meta">数据日期 {{DATA_DATE}} · 生成时间 {{RUN_AT}}（北京时间） · 每交易日 08:20 自动更新</p>
+<p class="meta">数据日期 {{DATA_DATE}} · 生成时间 {{RUN_AT}}（北京时间） · 每交易日收盘后（北京 16:20）自动更新</p>
 <div class="cards">{{CARDS}}</div>
 <h3>六维横向对比</h3>
 {{COMP}}
