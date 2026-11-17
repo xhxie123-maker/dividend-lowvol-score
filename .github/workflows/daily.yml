@@ -2,8 +2,8 @@ name: 每日红利低波评分
 
 on:
   schedule:
-    # UTC 00:20 = 北京时间 08:20，周一至周五
-    - cron: "20 0 * * 1-5"
+    # UTC 08:20 = 北京时间 16:20，周一至周五收盘后（15:00 收盘，留 80 分钟等行情与净值接口更新）
+    - cron: "20 8 * * 1-5"
   workflow_dispatch:
 
 permissions:
