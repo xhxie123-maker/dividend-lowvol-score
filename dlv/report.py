@@ -119,7 +119,7 @@ def write_log(root, all_series, alerts, data_date, run_at, errors, coverage_stat
     add()
     add("## 一、评分总览")
     add()
-    add("| 标的 | 代码 | 收盘价 | 综合评分 | 四档操作建议 | 较前一日 | 数据覆盖率 |")
+    add("| 标的 | 代码 | 收盘价 | 综合评分 | 五档操作建议 | 较前一日 | 数据覆盖率 |")
     add("| --- | --- | --- | --- | --- | --- | --- |")
     for etf, rows in all_series:
         r = rows[-1]
@@ -130,7 +130,7 @@ def write_log(root, all_series, alerts, data_date, run_at, errors, coverage_stat
             "—" if r["score"] is None else action_of(r["score"], ACTIONS)["label"],
             "—" if delta is None else "{:+.1f}".format(delta), r["coverage"] * 100))
     add()
-    add("四档口径：{}（区间 / 档位），动作与仓位见第四节。".format(band_text(ACTIONS)))
+    add("五档口径：{}（区间 / 档位），动作与仓位见第四节。".format(band_text(ACTIONS)))
     add("五档评级（仅描述用）：85–100 非常有吸引力 / 70–84 较有吸引力 / 60–69 中性偏积极 / 40–59 中性偏谨慎 / 0–39 吸引力较低。")
     add()
 
@@ -190,9 +190,9 @@ def write_log(root, all_series, alerts, data_date, run_at, errors, coverage_stat
     add("预警独立于综合分：综合分高不等于无风险，触发高等级预警时单独立项核查。")
     add()
 
-    add("## 四、四档操作建议")
+    add("## 四、五档操作建议")
     add()
-    add("四档把综合评分换算成仓位纪律，区间为 {}。".format(band_text(ACTIONS)))
+    add("五档把综合评分换算成仓位纪律（末档 E 为强卖出信号），区间为 {}。".format(band_text(ACTIONS)))
     add()
     add("| 档位 | 分数区间 | 参考仓位 | 动作要点 |")
     add("| --- | --- | --- | --- |")
@@ -210,8 +210,8 @@ def write_log(root, all_series, alerts, data_date, run_at, errors, coverage_stat
         add("- **{}（{}）**：综合评分 {} → {}，参考仓位 {}；{}".format(
             etf["short"], etf["code"], num_fmt(r["score"], 1), t["label"], t["position"], t["action"]))
     add()
-    add("调档规则：跨档且连续 5 个交易日维持新档位才执行，单日跳档视为噪声；档位只调仓位，不改买卖时点。")
-    add("回测提示：档位与未来收益并非严格单调（详见回测报告第二节），因此仓位倾斜限定在相邻档 ±20 个百分点，不做反向操作。")
+    add("调档规则：跨档且连续 5 个交易日维持新档位才执行，单日跳档视为噪声；A–D 档只调仓位，不改买卖时点；E 档为强卖出信号，一旦确认按动作要点降仓。")
+    add("回测提示：A–D 档位与未来收益并非严格单调（详见回测报告第二节），A–D 只做相邻档 ±20 个百分点的温和倾斜，不做反向操作；E 档阈值 35 来自操作语义而非回测最优点，样本少，结论只作方向参考。")
     add()
 
     add("## 五、横向对比")
@@ -264,7 +264,7 @@ def write_log(root, all_series, alerts, data_date, run_at, errors, coverage_stat
     add("## 八、口径与免责")
     add()
     add("- 评分衡量配置吸引力，是相对排序工具，不是买卖信号。")
-    add("- 四档操作建议只换算仓位区间，不预测涨跌；实际仓位还受个人风险预算、持仓成本与账户约束。")
+    add("- 五档操作建议只换算仓位区间，不预测涨跌；E 档是纪律性减仓提示，不是收益预测；实际仓位还受个人风险预算、持仓成本与账户约束。")
     add("- 子项统一用窗口内百分位排名（默认 1250 交易日，当前股息率 250 日），不使用固定绝对阈值。")
     add("- 折溢价与股息率以不复权收盘价为分母；分红只计已实施（除息）部分。")
     add("- 成分股财务为前十大持仓加权代理（季度持仓快照，按公告日 point-in-time），非全成分股口径。")
@@ -467,7 +467,7 @@ h3{font-size:15px;margin:26px 0 10px}
 <div class="cards">{{CARDS}}</div>
 <h3>六维横向对比</h3>
 {{COMP}}
-<h3>四档操作建议</h3>
+<h3>五档操作建议</h3>
 {{LEGEND}}
 <h3>近 30 个交易日评分</h3>
 {{HIST}}
@@ -475,7 +475,7 @@ h3{font-size:15px;margin:26px 0 10px}
 <div class="box"><ul>{{SRC}}</ul></div>
 <h3>日志存档</h3>
 <div class="box"><ul>{{LOGS}}</ul></div>
-<p class="note">评分体系：股息吸引力 20 / 分红质量与可持续性 20 / 低波动与风险控制 20 / 估值合理性 15 / 盈利与财务质量 15 / 市场环境与资金趋势 10，子项统一用窗口内百分位排名标准化。综合评分按四档换算成仓位建议（A ≥70 / B 60–69 / C 45–59 / D <45），四档只调仓位、不是买卖信号。数据全部来自公开免费接口（东财行情与净值、中证指数估值、东财成分股财务、国债收益率报表）；成分股财务为前十大持仓加权代理，PB 分位无免费日频源未接入。风险预警独立于综合分。评分为配置吸引力排序工具，不构成投资建议。源码、回测与逐日日志：<a href="https://github.com/{{REPO}}">github.com/{{REPO}}</a></p>
+<p class="note">评分体系：股息吸引力 20 / 分红质量与可持续性 20 / 低波动与风险控制 20 / 估值合理性 15 / 盈利与财务质量 15 / 市场环境与资金趋势 10，子项统一用窗口内百分位排名标准化。综合评分按五档换算成仓位纪律（A ≥70 / B 60–69 / C 45–59 / D 35–44 / E <35），末档 E 为强卖出信号，A–D 只调仓位、不是买卖信号。数据全部来自公开免费接口（东财行情与净值、中证指数估值、东财成分股财务、国债收益率报表）；成分股财务为前十大持仓加权代理，PB 分位无免费日频源未接入。风险预警独立于综合分。评分为配置吸引力排序工具，不构成投资建议。源码、回测与逐日日志：<a href="https://github.com/{{REPO}}">github.com/{{REPO}}</a></p>
 </div>
 </body>
 </html>
