@@ -295,7 +295,7 @@ def write(root, all_series, bench, bands, data_date, tiers=None):
         for h, table in band_tbl.items():
             for row in table:
                 w.writerow({"h": h, "rating": row["label"], "n": row["n"], "excess": row["excess"],
-                            "win": row["win"], "best": row["best"], "worst": row["worst"])
+                            "win": row["win"], "best": row["best"], "worst": row["worst"]})
     with open(os.path.join(out_dir, "tier_stats.csv"), "w", encoding="utf-8", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=["h", "tier", "position", "n", "excess", "win", "best", "worst"])
         w.writeheader()
