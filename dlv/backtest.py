@@ -415,7 +415,7 @@ def write(root, all_series, bench, bands, data_date, tiers=None):
         for row in port_tbl:
             add("| {} | {} | {} | {} | {} | {} |".format(
                 row["name"], f_pct(row.get("total"), sign=True), f_pct(row.get("cagr")),
-                f_pct(row.get("vol")), f_num(row.get("sharpe"), 2), f_pct(row.get("mdd")))
+                f_pct(row.get("vol")), f_num(row.get("sharpe"), 2), f_pct(row.get("mdd"))))) 
         add()
     else:
         add("共同区间不足 60 个交易日，跳过。")
