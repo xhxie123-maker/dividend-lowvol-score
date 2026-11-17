@@ -327,6 +327,10 @@ def write(root, all_series, bench, bands, data_date, tiers=None):
         for row in seg_tbl:
             w.writerow(row)
 
+    t60 = tier_tbl.get(60) or []
+    best60 = max(t60, key=lambda r: r["excess"]) if t60 else None
+    worst60 = min(t60, key=lambda r: r["excess"]) if t60 else None
+
     L = []
 
     def add(s=""):
@@ -370,8 +374,10 @@ def write(root, all_series, bench, bands, data_date, tiers=None):
                 row["label"] + (" ※" if row["n"] < 30 else ""), range_text(tiers, i), row["position"],
                 row["n"], row["excess"], row["win"], row["best"], row["worst"]))
         add()
-    add("读法：若四档超额不随档位递升（历史上 D 档反而最高），说明评分更适合做相对排序与温和仓位倾斜，"
-        "不能反向使用（“分数低就加仓”）。")
+    if best60 and worst60:
+        add("读法：未来 60 日超额最高的是 {}（{:+.2%}），最低的是 {}（{:+.2%}）；"
+            "四档之间并不单调，因此四档只做温和仓位倾斜，不能反向使用（“低分反而加仓”）。".format(
+                best60["label"], best60["excess"], worst60["label"], worst60["excess"]))
     add()
     add("## 三、单因子五分位（未来 60 日超额，Q5−Q1）")
     add()

@@ -102,7 +102,6 @@ def write_snapshot(root, payload, data_date, run_at):
 
 
 def write_log(root, all_series, alerts, data_date, run_at, errors, coverage_stats, etf_states=None):
-    from .model import rating_of
     states_map = {etf["code"]: st for etf, st in (etf_states or [])}
     path = os.path.join(root, "logs", "{}.md".format(data_date))
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -212,7 +211,7 @@ def write_log(root, all_series, alerts, data_date, run_at, errors, coverage_stat
             etf["short"], etf["code"], num_fmt(r["score"], 1), t["label"], t["position"], t["action"]))
     add()
     add("调档规则：跨档且连续 5 个交易日维持新档位才执行，单日跳档视为噪声；档位只调仓位，不改买卖时点。")
-    add("回测提示：四档与未来收益的关系并不单调（<45 档历史超额反而最高），因此仓位倾斜幅度限定在相邻档 ±20 个百分点，不做反向操作。")
+    add("回测提示：档位与未来收益并非严格单调（详见回测报告第二节），因此仓位倾斜限定在相邻档 ±20 个百分点，不做反向操作。")
     add()
 
     add("## 五、横向对比")
@@ -254,12 +253,14 @@ def write_log(root, all_series, alerts, data_date, run_at, errors, coverage_stat
     for line in coverage_stats:
         add("- {}".format(line))
     add()
+    add("## 七、数据异常")
+    add()
     if errors:
-        add("## 七、数据异常")
-        add()
         for e in errors:
             add("- {}".format(e))
-        add()
+    else:
+        add("- 本次未发现异常（交易日一致、数据抓取与缓存均正常）。")
+    add()
     add("## 八、口径与免责")
     add()
     add("- 评分衡量配置吸引力，是相对排序工具，不是买卖信号。")
