@@ -3,7 +3,7 @@
 ## `daily_scores.csv`
 
 - 48 列，每行 = 一个标的在一个交易日的完整评分快照；主键 `(date, code)`
-- `rating` 为五档评级（描述用），`action` 为四档操作建议（A/B/C/D，执行用）
+- `rating` 为五档评级（描述用），`action` 为五档操作建议（A/B/C/D/E，执行用；E = 强卖出）
 - 新增列自 **2025-11-17** 起有值：成分股财务（`roe` / `roa` / `ocf_np` / `debt_ratio` / `np_stab` / `payout` / `financial`）、估值与宏观（`bond10y` / `erp` / `spread` / `fwd_yield` / `payout` / `fcf_cover` / `pe`）、资金（`flow20` / `interest_cover`）
 - 2025-11-17 **及更早**的行来自旧引擎，17 列为空属预期（旧引擎未接入这些子项，覆盖率 85%）；这些行的 `action` 列也为空，用 `score` 自行映射即可。做时序统计时请按 `coverage` 列筛样本，或直接从 `2025-11-17` 之后取
 - `coverage` 为**子项级**加权覆盖率（已实现子项权重 ÷ 100），代理项不计入已实现
