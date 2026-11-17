@@ -283,9 +283,8 @@ class Fetcher(object):
         try:
             with open(path, "r", encoding="utf-8") as fh:
                 data = json.load(fh)
-            age = (datetime.now(CST) - datetime.strptime(data.get("fetched_at", "2000-01-01"),
-                                                        "%Y-%m-%d")).days
-            if age <= self.refresh_days:
+            stamp = datetime.strptime(data.get("fetched_at", "2000-01-01"), "%Y-%m-%d").date()
+            if (datetime.now(CST).date() - stamp).days <= self.refresh_days:
                 return data
         except Exception:
             return None
