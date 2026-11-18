@@ -6,3 +6,4 @@
 {"run_at": "2026-11-17 17:19", "data_date": "2026-11-17", "etfs": [{"code": "515450", "score": 51.15, "coverage": 0.89}, {"code": "563020", "score": 56.94, "coverage": 0.92}], "errors": []}
 {"run_at": "2026-11-17 19:20", "data_date": "2026-11-17", "etfs": [{"code": "515450", "score": 51.22, "coverage": 0.89}, {"code": "563020", "score": 57.07, "coverage": 0.92}], "errors": []}
 {"run_at": "2026-11-17 22:22", "data_date": "2026-11-17", "etfs": [{"code": "515450", "score": 51.22, "coverage": 0.89}, {"code": "563020", "score": 57.07, "coverage": 0.92}], "errors": []}
+{"run_at": "2026-11-18 17:19", "data_date": "2026-11-18", "etfs": [{"code": "515450", "score": 50.84, "coverage": 0.89}, {"code": "563020", "score": 56.66, "coverage": 0.92}], "errors": []}
