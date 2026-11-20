@@ -11,6 +11,7 @@ import argparse
 import json
 import os
 import sys
+import time
 from datetime import datetime, timedelta
 
 from dlv import backtest as bt
@@ -47,6 +48,43 @@ def coverage_lines(etf_states):
     return lines
 
 
+def _retry(fn, *a, **kw):
+    """免费接口偶发 TLS/限流失败时的重试包装。"""
+    for i in range(3):
+        try:
+            return fn(*a, **kw)
+        except Exception:
+            if i == 2:
+                raise
+            time.sleep(8)
+
+
+def write_minimal_log(rows_list, data_date, run_at, errors):
+    """只有部分标的成功时写精简日志，避免整轮产物缺失。"""
+    path = os.path.join(ROOT, "logs", "{}.md".format(data_date))
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    L = ["# 红利低波 ETF 监测评分 · {}".format(data_date), "",
+         "- 生成时间：{}（北京时间）".format(run_at),
+         "- 注意：本次仅部分标的产出数据，日志为精简版，完整八节日志待次日恢复", ""]
+    for etf, rows in rows_list:
+        last = rows[-1]
+        L.append("## {}（{}）".format(etf["name"], etf["code"]))
+        L.append("")
+        L.append("- 收盘价 {}，综合评分 {}，数据覆盖率 {:.0f}%".format(
+            last.get("close_raw"), model.num_fmt(last["score"], 1), last["coverage"] * 100))
+        for k, n, w, subs in model.DIMENSIONS:
+            L.append("- {} {} 分".format(n, model.num_fmt(last["dim"].get(k), 1)))
+        L.append("")
+    if errors:
+        L.append("## 异常与缺失")
+        L.append("")
+        for e in errors:
+            L.append("- {}".format(e))
+        L.append("")
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write("\n".join(L))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--offline", action="store_true")
@@ -65,7 +103,7 @@ def main():
     run_at = now.strftime("%Y-%m-%d %H:%M")
     errors = []
 
-    bench = fetcher.bars(cfg["benchmark"]["secid"], 1)
+    bench = _retry(fetcher.bars, cfg["benchmark"]["secid"], 1)
     bond = fetcher.bond10y()
     if not bond:
         errors.append("10 年期国债收益率未取到，股债收益差与股权风险溢价按缺失处理")
@@ -73,16 +111,16 @@ def main():
     all_series, payload, alerts_map, etf_states = [], [], {}, []
     for etf in cfg["etfs"]:
         try:
-            bars = fetcher.bars(etf["secid"], 1)
-            raw_bars = fetcher.bars(etf["secid"], 0)
+            bars = _retry(fetcher.bars, etf["secid"], 1)
+            raw_bars = _retry(fetcher.bars, etf["secid"], 0)
             need_from = (now - timedelta(days=windows["nav_lookback_days"])).strftime("%Y-%m-%d")
-            nav = fetcher.nav(etf["code"], need_from)
+            nav = _retry(fetcher.nav, etf["code"], need_from)
             shares = fetcher.shares(etf["code"], etf["secid"], bars[-1]["date"])
-            cached = pit.holdings_history(fetcher, etf["code"])
+            cached = _retry(pit.holdings_history, fetcher, etf["code"])
             snaps = pit.snapshots(cached)
             hold = snaps[-1] if snaps else None
             dates = [b["date"] for b in bars]
-            fin = pit.build(fetcher, cached, dates)
+            fin = _retry(pit.build, fetcher, cached, dates)
             pe_map = {d: rec["pe"] for d, rec in fin.items() if rec.get("pe")}
             pb_map = {d: rec["pb"] for d, rec in fin.items() if rec.get("pb")}
             rows = model.build_series(etf, bars, raw_bars, nav, shares, bench,
@@ -154,9 +192,18 @@ def main():
         for a in alerts_map.get(etf["code"], []):
             merged_alerts.append(dict(a, title="{}：{}".format(etf["short"], a["title"])))
     cov_lines = coverage_lines(etf_states)
-    report.write_log(ROOT, all_series, merged_alerts, data_date, run_at, errors, cov_lines, etf_states)
+    try:
+        report.write_log(ROOT, all_series, merged_alerts, data_date, run_at, errors, cov_lines, etf_states)
+    except Exception as exc:
+        errors.append("八节日志渲染失败（可能只有单只标的成功）：{}".format(exc))
+        print("[WARN] 日志渲染失败：{}".format(exc), file=sys.stderr, flush=True)
+        write_minimal_log(all_series, data_date, run_at, errors)
     repo = os.environ.get("GITHUB_REPOSITORY", "xhxie123-maker/dividend-lowvol-score")
-    report.write_dashboard(ROOT, all_series, alerts_map, data_date, run_at, repo, scores, cov_lines)
+    try:
+        report.write_dashboard(ROOT, all_series, alerts_map, data_date, run_at, repo, scores, cov_lines)
+    except Exception as exc:
+        errors.append("看板渲染失败：{}".format(exc))
+        print("[WARN] 看板渲染失败：{}".format(exc), file=sys.stderr, flush=True)
 
     run_log = os.path.join(ROOT, "data", "run_history.jsonl")
     os.makedirs(os.path.dirname(run_log), exist_ok=True)
