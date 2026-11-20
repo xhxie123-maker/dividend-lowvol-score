@@ -34,6 +34,10 @@ jobs:
           restore-keys: |
             pit-${{ runner.os }}-
 
+      - name: 免费数据源连通性自检
+        continue-on-error: true
+        run: python -m dlv.probe
+
       - name: 计算评分并生成日志、看板与回测
         run: python dividend_lowvol_score.py --backtest
 
@@ -53,6 +57,9 @@ jobs:
         run: |
           echo "### 最新评分" >> $GITHUB_STEP_SUMMARY
           tail -n 2 data/daily_scores.csv >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 数据源自检" >> $GITHUB_STEP_SUMMARY
+          cat logs/source_probe.md >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 回测要点" >> $GITHUB_STEP_SUMMARY
           sed -n '/## 五、组合对照/,/^$/p' backtest/report.md | head -n 12 >> $GITHUB_STEP_SUMMARY
