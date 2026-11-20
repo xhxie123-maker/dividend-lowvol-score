@@ -180,9 +180,43 @@ def build(fetcher, cached_holdings, dates):
     return out
 
 
+def _save_pack(fetcher, code, pack):
+    path = os.path.join(fetcher.cache_dir, "pit", "pitstock_{}.json".format(code))
+    try:
+        data = {k: v for k, v in pack.items()
+                if k not in ("_cache", "_by_report", "_notices", "_px_dates")}
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(data, fh, ensure_ascii=False)
+    except Exception:
+        pass
+
+
+def patch_stock():
+    """缓存里价格缺失或过短时强制重取，避免旧缓存把 PE/PB 锁死在少数股票上。"""
+    orig = getattr(pit, "_stock_orig", pit._stock)
+    pit._stock_orig = orig
+    if getattr(orig, "_px_guarded", False):
+        return
+
+    def stock(fetcher, code):
+        pack = orig(fetcher, code)
+        px = pack.get("px") or {}
+        if len(px) < 200 and not getattr(fetcher, "offline", False):
+            new_px = _fetch_px(fetcher, code)
+            if len(new_px) > len(px):
+                pack["px"] = new_px
+                pack.pop("_px_dates", None)
+                _save_pack(fetcher, code, pack)
+        return pack
+
+    stock._px_guarded = True
+    pit._stock = stock
+
+
 def install(fetcher=None, clear_px=True):
     """在主编排里调用一次：替换价格源 + 替换聚合实现。"""
     pit._fetch_px = _fetch_px
+    patch_stock()
     if fetcher is not None and clear_px:
         marker = os.path.join(fetcher.cache_dir, "pit", ".pxfix_v2")
         if not os.path.exists(marker):
