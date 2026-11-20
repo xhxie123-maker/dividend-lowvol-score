@@ -11,12 +11,17 @@
 """
 
 import bisect
+import json
 import math
 import os
 import random
 
+from . import feed
 from .action import action_of, tiers_of
 from .model import stdev
+
+KLINE_URL = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
+_KCACHE = {}
 
 TIER_W = {"A": 0.85, "B": 0.60, "C": 0.40, "D": 0.20, "E": 0.05}
 RF = 0.015
@@ -45,6 +50,37 @@ def boot_ci(vals, seed=7, n=BOOT):
 
 def open_map(bars):
     return {b["date"]: b.get("open") for b in bars if b.get("open")}
+
+
+def klines(secid):
+    """取带开盘价的日线（feed.bars 只保留收盘价，这里单独再取一次）。"""
+    if secid in _KCACHE:
+        return _KCACHE[secid]
+    code = secid.split(".")[-1]
+    symbol = ("sh" if code[0] == "6" else "sz") + code
+    out = []
+    try:
+        raw = feed.http_get("https://web.ifzq.gtimg.cn/appstock/app/fqkline/get",
+                            {"param": "{},day,2019-01-01,2026-12-31,1700,".format(symbol)},
+                            timeout=20)
+        node = ((json.loads(raw).get("data") or {}).get(symbol) or {})
+        for r in (node.get("day") or node.get("qfqday") or []):
+            out.append({"date": r[0], "open": float(r[1]), "close": float(r[2])})
+    except Exception as exc:
+        print("[WARN] 腾讯开盘价失败 {}：{}".format(symbol, exc), flush=True)
+    if not out:
+        try:
+            raw = feed.http_get(KLINE_URL, {
+                "secid": secid, "fields1": "f1,f2,f3,f4,f5,f6",
+                "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61",
+                "klt": "101", "fqt": "1", "beg": "19900101", "end": "20500101"}, timeout=25)
+            for line in ((json.loads(raw).get("data") or {}).get("klines") or []):
+                f = line.split(",")
+                out.append({"date": f[0], "open": float(f[1]), "close": float(f[2])})
+        except Exception as exc:
+            print("[WARN] 开盘价序列获取失败 {}：{}".format(secid, exc), flush=True)
+    _KCACHE[secid] = out
+    return out
 
 
 def event_study(rows, bars, tiers, n):
@@ -135,7 +171,9 @@ def write(root, series, bars_map, bench, cfg_bands, data_date, cfg_tiers):
          "- 夏普：mean(日超额)×250 /(日波动×√250)，无风险利率 {:.1f}%".format(RF * 100), ""]
 
     for etf, rows in series:
-        bars = bars_map.get(etf["code"]) or []
+        bars = klines(etf.get("secid") or "") or [
+            {"date": b["date"], "open": b["close"], "close": b["close"]}
+            for b in (bars_map.get(etf["code"]) or [])]
         L.append("## {}（{}）".format(etf["name"], etf["code"]))
         L.append("")
         for n in HORIZONS:
