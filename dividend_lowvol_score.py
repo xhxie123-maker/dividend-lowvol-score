@@ -15,7 +15,7 @@ import time
 from datetime import datetime, timedelta
 
 from dlv import backtest as bt
-from dlv import feed, model, pit, pxfix, report
+from dlv import feed, model, pit, pitbt, pxfix, report
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -111,7 +111,7 @@ def main():
     if not bond:
         errors.append("10 年期国债收益率未取到，股债收益差与股权风险溢价按缺失处理")
 
-    all_series, payload, alerts_map, etf_states = [], [], {}, []
+    all_series, payload, alerts_map, etf_states, bars_map = [], [], {}, [], {}
     for etf in cfg["etfs"]:
         try:
             bars = _retry(fetcher.bars, etf["secid"], 1)
@@ -134,6 +134,7 @@ def main():
             rows = model.score_series(rows, windows)
             pit.finalize(rows, windows)
             all_series.append((etf, rows))
+            bars_map[etf["code"]] = bars
             alerts_map[etf["code"]] = model.risk_alerts(rows)
             last = rows[-1]
             states = {}
@@ -222,6 +223,8 @@ def main():
         try:
             path = bt.write(ROOT, all_series, bench, cfg["rating_bands"], data_date, tiers)[0]
             print("[OK] 回测报告 {}".format(os.path.relpath(path, ROOT)), flush=True)
+            path2 = pitbt.write(ROOT, all_series, bars_map, bench, cfg["rating_bands"], data_date, tiers)
+            print("[OK] 执行口径回测 {}".format(os.path.relpath(path2, ROOT)), flush=True)
         except Exception as exc:
             errors.append("回测失败：{}".format(exc))
             print("[ERR] 回测 {}".format(exc), file=sys.stderr, flush=True)
