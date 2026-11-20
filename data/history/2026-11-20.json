@@ -1,5 +1,5 @@
 {
-  "run_at": "2026-11-20 19:16",
+  "run_at": "2026-11-20 19:21",
   "data_date": "2026-11-20",
   "etfs": [
     {
@@ -7,7 +7,7 @@
       "name": "南方标普中国A股大盘红利低波50ETF",
       "short": "南方红利低波",
       "index": "标普中国A股大盘红利低波50指数",
-      "score": 59.47,
+      "score": 58.58,
       "rating": "中性偏谨慎",
       "coverage": 0.96,
       "data_date": "2026-11-20",
@@ -161,7 +161,7 @@
           "key": "valuation",
           "name": "估值合理性",
           "weight": 15,
-          "score": 66.67,
+          "score": 60.78,
           "coverage": 1.0,
           "subs": [
             {
@@ -169,7 +169,7 @@
               "name": "PE 历史分位数（持仓加权）",
               "weight": 5,
               "status": "live",
-              "score": 1.68
+              "score": 22.48
             },
             {
               "key": "pb_pct",
@@ -183,7 +183,7 @@
               "name": "股权风险溢价（EP − 10Y）",
               "weight": 5,
               "status": "live",
-              "score": 99.78
+              "score": 61.3
             }
           ]
         },
@@ -314,9 +314,9 @@
         "bond10y": 1.5803,
         "bench_amount20": 457992377325.91504,
         "mkt_vol": 0.143668,
-        "shares": 14084335104.0,
+        "shares": 14123835136.0,
         "flow20": null,
-        "pe": 59.626477,
+        "pe": 15.095238,
         "fin_roe": 9.997321,
         "fin_roa": 4.709599,
         "fin_ocf_np": 0.85688,
@@ -332,7 +332,7 @@
         "dps_growth": 0.169607,
         "div_cv": 0.419862,
         "spread": 0.037002,
-        "erp": 0.000968,
+        "erp": 0.050443,
         "fwd_yield": 0.061761,
         "excess20": 0.118093,
         "excess60": 0.244793,
@@ -344,7 +344,7 @@
       "name": "易方达中证红利低波动ETF",
       "short": "易方达红利低波",
       "index": "中证红利低波动指数（H30269）",
-      "score": 64.42,
+      "score": 62.47,
       "rating": "中性偏积极",
       "coverage": 0.91,
       "data_date": "2026-11-20",
@@ -498,7 +498,7 @@
           "key": "valuation",
           "name": "估值合理性",
           "weight": 15,
-          "score": 92.87,
+          "score": 79.86,
           "coverage": 0.667,
           "subs": [
             {
@@ -506,7 +506,7 @@
               "name": "PE 历史分位数（持仓加权）",
               "weight": 5,
               "status": "live",
-              "score": 89.22
+              "score": 81.25
             },
             {
               "key": "pb_pct",
@@ -520,7 +520,7 @@
               "name": "股权风险溢价（EP − 10Y）",
               "weight": 5,
               "status": "live",
-              "score": 96.52
+              "score": 78.48
             }
           ]
         },
@@ -651,9 +651,9 @@
         "bond10y": 1.5803,
         "bench_amount20": 457992377325.91504,
         "mkt_vol": 0.143668,
-        "shares": 11437910016.0,
+        "shares": 11444910080.0,
         "flow20": null,
-        "pe": 31.033161,
+        "pe": 7.641331,
         "fin_roe": 9.619497,
         "fin_roa": 2.399279,
         "fin_ocf_np": 0.785539,
@@ -669,7 +669,7 @@
         "dps_growth": 0.328806,
         "div_cv": 0.081499,
         "spread": 0.02272,
-        "erp": 0.016421,
+        "erp": 0.115064,
         "fwd_yield": 0.05008,
         "excess20": 0.098052,
         "excess60": 0.211243,
