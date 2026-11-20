@@ -9,3 +9,4 @@
 {"run_at": "2026-11-18 17:19", "data_date": "2026-11-18", "etfs": [{"code": "515450", "score": 50.84, "coverage": 0.89}, {"code": "563020", "score": 56.66, "coverage": 0.92}], "errors": []}
 {"run_at": "2026-11-19 17:24", "data_date": "2026-11-19", "etfs": [{"code": "515450", "score": 51.09, "coverage": 0.89}, {"code": "563020", "score": 57.3, "coverage": 0.92}], "errors": []}
 {"run_at": "2026-11-20 17:19", "data_date": "2026-11-20", "etfs": [{"code": "515450", "score": 50.88, "coverage": 0.89}, {"code": "563020", "score": 57.74, "coverage": 0.92}], "errors": []}
+{"run_at": "2026-11-20 18:44", "data_date": "2026-11-20", "etfs": [{"code": "515450", "score": 58.99, "coverage": 0.96}], "errors": ["563020 易方达红利低波 抓取或计算失败：curl 失败 rc=56 curl: (56) OpenSSL SSL_read: OpenSSL/3.5.5: error:0A000126:SSL routines::unexpected eof while reading, errno 0\n", "八节日志渲染失败（可能只有单只标的成功）：list index out of range"]}
