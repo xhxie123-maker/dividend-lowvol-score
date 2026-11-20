@@ -49,14 +49,16 @@ def coverage_lines(etf_states):
 
 
 def _retry(fn, *a, **kw):
-    """免费接口偶发 TLS/限流失败时的重试包装。"""
-    for i in range(3):
+    """免费接口偶发 TLS/限流失败时的重试包装（退避 20 秒）。"""
+    for i in range(4):
         try:
             return fn(*a, **kw)
-        except Exception:
-            if i == 2:
+        except Exception as exc:
+            if i == 3:
                 raise
-            time.sleep(8)
+            print("[WARN] {} 第 {} 次失败，20 秒后重试：{}".format(
+                getattr(fn, "__name__", fn), i + 1, exc), file=sys.stderr, flush=True)
+            time.sleep(20)
 
 
 def write_minimal_log(rows_list, data_date, run_at, errors):
