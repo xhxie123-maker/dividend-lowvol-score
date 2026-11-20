@@ -16,7 +16,7 @@ concurrency:
 jobs:
   score:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - name: 检出仓库
         uses: actions/checkout@v4
@@ -25,6 +25,14 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: 缓存个股 PIT 数据（不入库）
+        uses: actions/cache@v4
+        with:
+          path: data/cache/pit
+          key: pit-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            pit-${{ runner.os }}-
 
       - name: 计算评分并生成日志、看板与回测
         run: python dividend_lowvol_score.py --backtest

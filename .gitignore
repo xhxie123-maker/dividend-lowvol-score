@@ -4,3 +4,5 @@ _probe/
 .DS_Store
 Thumbs.db
 backtest/samples.csv
+
+data/cache/pit/

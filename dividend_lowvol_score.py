@@ -14,7 +14,7 @@ import sys
 from datetime import datetime, timedelta
 
 from dlv import backtest as bt
-from dlv import feed, model, report
+from dlv import feed, model, pit, report
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -26,20 +26,24 @@ def load_config():
 
 def coverage_lines(etf_states):
     lines = []
+    total = pit.sub_count()
     for etf, states in etf_states:
         real = {st: 0 for st in ("live", "proxy", "missing")}
         for st in states.values():
             real[st] += 1
         miss = [sn for key, name, dw, subs in model.DIMENSIONS
                 for sk, sn, sw, s in subs if states.get((key, sk)) == "missing"]
-        lines.append("{}：34 个子项，已实现 {} / 代理 {} / 待接入 {}（{}）".format(
-            etf["short"], real["live"], real["proxy"], real["missing"],
+        lines.append("{}：{} 个子项，已实现 {} / 代理 {} / 待接入 {}（{}）".format(
+            etf["short"], total, real["live"], real["proxy"], real["missing"],
             "、".join(miss) or "无"))
     lines.append("数据源：日线、净值与分红（东财基金 F10）、场内份额（东财行情）、"
-                 "10Y 国债收益率（东财国债报表）、指数 PE（中证指数官网）、"
-                 "成分股财务与分红（东财 F10 报表），全部为公开免费接口。")
-    lines.append("代理口径：成分股财务为前十大持仓加权（季度快照、按公告日 point-in-time）；"
-                 "ROIC 以总资产净利率代理；PB 分位无免费日频序列，仍待接入。")
+                 "10Y 国债收益率（东财国债报表）、成分股财务与分红（东财 F10 报表）、"
+                 "资本开支与经营现金流（新浪财经现金流量表），全部为公开免费接口。")
+    lines.append("代理口径：成分股财务按前十大持仓加权，持仓按基金定期报告法定披露日切换"
+                 "（point-in-time，不把最新一期权重套到历史）；PE / PB 统一用持仓加权口径反算"
+                 "（PE = 1 / Σ权重·EPS/P，PB = Σ权重·P/BPS），不再用 ETF 价格代理；"
+                 "自由现金流覆盖率 = (CFO − CapEx) / 现金分红总额；ROIC 仍以总资产净利率（ROA）代理，"
+                 "银行/保险不适用自由现金流与利息保障倍数，该子项按缺失处理。")
     return lines
 
 
@@ -53,6 +57,7 @@ def main():
     cfg = load_config()
     windows = cfg["windows"]
     tiers = cfg.get("action_tiers")
+    pit.patch_dimensions()
     report.set_globals(cfg["rating_bands"], tiers)
     fetcher = feed.Fetcher(ROOT, offline=args.offline, refresh_days=args.refresh_days)
 
@@ -73,12 +78,20 @@ def main():
             need_from = (now - timedelta(days=windows["nav_lookback_days"])).strftime("%Y-%m-%d")
             nav = fetcher.nav(etf["code"], need_from)
             shares = fetcher.shares(etf["code"], etf["secid"], bars[-1]["date"])
-            hold = feed.latest_holdings(fetcher.holdings(etf["code"]))
-            fin = feed.financial_proxy(fetcher, hold, [b["date"] for b in bars])
-            pe = fetcher.index_pe(etf["pe_index"]) if etf.get("pe_index") else {}
+            cached = pit.holdings_history(fetcher, etf["code"])
+            snaps = pit.snapshots(cached)
+            hold = snaps[-1] if snaps else None
+            dates = [b["date"] for b in bars]
+            fin = pit.build(fetcher, cached, dates)
+            pe_map = {d: rec["pe"] for d, rec in fin.items() if rec.get("pe")}
+            pb_map = {d: rec["pb"] for d, rec in fin.items() if rec.get("pb")}
             rows = model.build_series(etf, bars, raw_bars, nav, shares, bench,
-                                      {"bond": bond, "pe": pe, "fin": fin}, windows)
+                                      {"bond": bond, "pe": pe_map, "fin": fin}, windows)
+            for r in rows:
+                r["pb"] = pb_map.get(r["date"])
+            pit.fix_dividends(rows, nav)
             rows = model.score_series(rows, windows)
+            pit.finalize(rows, windows)
             all_series.append((etf, rows))
             alerts_map[etf["code"]] = model.risk_alerts(rows)
             last = rows[-1]
@@ -86,21 +99,22 @@ def main():
             for key, name, dw, subs in model.DIMENSIONS:
                 for sk, sn, sw, st in subs:
                     states[(key, sk)] = "missing" if last["sub"].get(sk) is None else st
-            if not pe:
+            if not pe_map:
                 states[("valuation", "pe_pct")] = "proxy"
             etf_states.append((etf, states))
             print("[OK] {} {} {} 评分 {} 覆盖率 {:.0f}%{}{}".format(
                 etf["code"], etf["short"], last["date"],
                 model.num_fmt(last["score"], 1), last["coverage"] * 100,
                 "" if hold else "（无持仓数据）",
-                "" if pe else "（PE 用价格代理）"), flush=True)
+                "" if pe_map else "（PE 退化，估值维度不可用）"), flush=True)
             payload.append({
                 "code": etf["code"], "name": etf["name"], "short": etf["short"], "index": etf["index"],
                 "score": None if last["score"] is None else round(last["score"], 2),
                 "rating": model.rating_of(last["score"], cfg["rating_bands"])["label"] if last["score"] else "—",
                 "coverage": round(last["coverage"], 3),
                 "data_date": last["date"],
-                "holdings": {"quarter": hold["quarter"], "total_weight": hold["total_weight"],
+                "holdings": {"quarter": hold["quarter"], "effective": hold["date"],
+                             "total_weight": hold["total_weight"],
                              "count": len(hold["items"])} if hold else None,
                 "dimensions": [{"key": k, "name": n, "weight": w,
                                 "score": None if last["dim"].get(k) is None else round(last["dim"][k], 2),
@@ -113,7 +127,7 @@ def main():
                 "alerts": alerts_map[etf["code"]],
                 "metrics": {k: (round(v, 6) if isinstance(v, float) else v)
                             for k, v in last.items()
-                            if k not in ("sub", "dim", "dim_cov", "score", "coverage", "missing")
+                            if k not in ("sub", "dim", "dim_cov", "score", "coverage", "missing", "snap")
                             and not isinstance(v, (list, dict))},
             })
         except Exception as exc:
