@@ -17,3 +17,4 @@
 {"run_at": "2026-11-20 19:30", "data_date": "2026-11-20", "etfs": [{"code": "515450", "score": 58.58, "coverage": 0.96}, {"code": "563020", "score": 62.47, "coverage": 0.91}], "errors": []}
 {"run_at": "2026-11-20 19:36", "data_date": "2026-11-20", "etfs": [{"code": "515450", "score": 51.2, "coverage": 0.96}, {"code": "563020", "score": 58.61, "coverage": 0.96}], "errors": []}
 {"run_at": "2026-11-20 19:44", "data_date": "2026-11-20", "etfs": [{"code": "515450", "score": 51.2, "coverage": 0.96}], "errors": ["563020 易方达红利低波 抓取或计算失败：curl 失败 rc=56 curl: (56) OpenSSL SSL_read: OpenSSL/3.5.5: error:0A000126:SSL routines::unexpected eof while reading, errno 0\n", "八节日志渲染失败（可能只有单只标的成功）：list index out of range"]}
+{"run_at": "2026-11-20 19:53", "data_date": "2026-11-20", "etfs": [{"code": "515450", "score": 51.2, "coverage": 0.96}, {"code": "563020", "score": 58.61, "coverage": 0.96}], "errors": []}
