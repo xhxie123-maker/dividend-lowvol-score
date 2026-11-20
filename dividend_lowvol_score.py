@@ -15,7 +15,7 @@ import time
 from datetime import datetime, timedelta
 
 from dlv import backtest as bt
-from dlv import feed, model, pit, report
+from dlv import feed, model, pit, pxfix, report
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -39,7 +39,7 @@ def coverage_lines(etf_states):
             "、".join(miss) or "无"))
     lines.append("数据源：日线、净值与分红（东财基金 F10）、场内份额（东财行情）、"
                  "10Y 国债收益率（东财国债报表）、成分股财务与分红（东财 F10 报表）、"
-                 "资本开支与经营现金流（新浪财经现金流量表），全部为公开免费接口。")
+                 "资本开支与经营现金流（新浪财经现金流量表）、个股日线（腾讯行情），全部为公开免费接口。")
     lines.append("代理口径：成分股财务按前十大持仓加权，持仓按基金定期报告法定披露日切换"
                  "（point-in-time，不把最新一期权重套到历史）；PE / PB 统一用持仓加权口径反算"
                  "（PE = 1 / Σ权重·EPS/P，PB = Σ权重·P/BPS），不再用 ETF 价格代理；"
@@ -100,6 +100,7 @@ def main():
     pit.patch_dimensions()
     report.set_globals(cfg["rating_bands"], tiers)
     fetcher = feed.Fetcher(ROOT, offline=args.offline, refresh_days=args.refresh_days)
+    pxfix.install(fetcher)
 
     now = datetime.now(feed.CST)
     run_at = now.strftime("%Y-%m-%d %H:%M")
