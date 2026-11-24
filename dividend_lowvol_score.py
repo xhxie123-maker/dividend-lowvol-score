@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 
 from dlv import backtest as bt
 from dlv import feed, model, pit, pitbt, pxfix, report
+from dlv.action import action_of
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -39,12 +40,11 @@ def coverage_lines(etf_states):
             "、".join(miss) or "无"))
     lines.append("数据源：日线、净值与分红（东财基金 F10）、场内份额（东财行情）、"
                  "10Y 国债收益率（东财国债报表）、成分股财务与分红（东财 F10 报表）、"
-                 "资本开支与经营现金流（新浪财经现金流量表）、个股日线（腾讯行情），全部为公开免费接口。")
-    lines.append("代理口径：成分股财务按前十大持仓加权，持仓按基金定期报告法定披露日切换"
-                 "（point-in-time，不把最新一期权重套到历史）；PE / PB 统一用持仓加权口径反算"
-                 "（PE = 1 / Σ权重·EPS/P，PB = Σ权重·P/BPS），不再用 ETF 价格代理；"
-                 "自由现金流覆盖率 = (CFO − CapEx) / 现金分红总额；ROIC 仍以总资产净利率（ROA）代理，"
-                 "银行/保险不适用自由现金流与利息保障倍数，该子项按缺失处理。")
+                 "资本开支与经营现金流（新浪财经现金流量表），全部为公开免费接口。")
+    lines.append("代理口径：成分股财务按前十大持仓加权，持仓按基金季报法定披露日切换（point-in-time）；"
+                 "PE / PB 统一用前十大持仓加权口径反算（PE = 1 / Σ权重·EP，PB = Σ权重·PB），"
+                 "不再用 ETF 价格代理；自由现金流覆盖率 = (CFO − CapEx) / 现金分红总额；"
+                 "ROIC 仍以总资产净利率（ROA）代理，金融股不披露利息保障倍数。")
     return lines
 
 
@@ -61,21 +61,56 @@ def _retry(fn, *a, **kw):
             time.sleep(20)
 
 
-def write_minimal_log(rows_list, data_date, run_at, errors):
-    """只有部分标的成功时写精简日志，避免整轮产物缺失。"""
+def write_minimal_log(rows_list, data_date, run_at, errors, cov_lines=None, tiers=None):
+    """只有部分标的成功时写单标的完整日志（八节版需要两只标的对比，这里逐项降级）。"""
     path = os.path.join(ROOT, "logs", "{}.md".format(data_date))
     os.makedirs(os.path.dirname(path), exist_ok=True)
     L = ["# 红利低波 ETF 监测评分 · {}".format(data_date), "",
          "- 生成时间：{}（北京时间）".format(run_at),
-         "- 注意：本次仅部分标的产出数据，日志为精简版，完整八节日志待次日恢复", ""]
+         "- 注意：本次仅 {} 只标的产出数据，横向对比（第五节）按缺失处理，其余各节正常给出".format(
+             len(rows_list)), ""]
     for etf, rows in rows_list:
         last = rows[-1]
+        prev = [x for x in rows if x["score"] is not None][-2:]
+        delta = None if len(prev) < 2 else prev[-1]["score"] - prev[-2]["score"]
+        action = None if last["score"] is None else action_of(last["score"], tiers or [])
         L.append("## {}（{}）".format(etf["name"], etf["code"]))
         L.append("")
-        L.append("- 收盘价 {}，综合评分 {}，数据覆盖率 {:.0f}%".format(
-            last.get("close_raw"), model.num_fmt(last["score"], 1), last["coverage"] * 100))
+        L.append("| 收盘价 | 综合评分 | 五档操作建议 | 较前一日 | 数据覆盖率 |")
+        L.append("| --- | --- | --- | --- | --- |")
+        L.append("| {} | {} | {} | {} | {:.0f}% |".format(
+            model.num_fmt(last.get("close_raw"), 3), model.num_fmt(last["score"], 1),
+            "—" if not action else action["label"],
+            "—" if delta is None else "{:+.1f}".format(delta), last["coverage"] * 100))
+        L.append("")
+        L.append("### 维度得分")
+        L.append("")
+        L.append("| 维度 | 权重 | 得分 | 维度覆盖率 |")
+        L.append("| --- | --- | --- | --- |")
         for k, n, w, subs in model.DIMENSIONS:
-            L.append("- {} {} 分".format(n, model.num_fmt(last["dim"].get(k), 1)))
+            L.append("| {} | {} | {} | {:.0f}% |".format(
+                n, w, model.num_fmt(last["dim"].get(k), 1), last["dim_cov"][k] * 100))
+        L.append("")
+        L.append("### 子项明细")
+        L.append("")
+        for k, n, w, subs in model.DIMENSIONS:
+            parts = []
+            for sk, sn, sw, st in subs:
+                v = last["sub"].get(sk)
+                parts.append("{} {}".format(sn, "—" if v is None else model.num_fmt(v, 1)))
+            L.append("- {}：{}".format(n, "；".join(parts)))
+        L.append("")
+        if action:
+            L.append("### 操作建议")
+            L.append("")
+            L.append("- {}，建议仓位 {}".format(action["label"], action["position"]))
+            L.append("- {}".format(action["action"]))
+            L.append("")
+    if cov_lines:
+        L.append("## 指标覆盖与数据源")
+        L.append("")
+        for line in cov_lines:
+            L.append("- {}".format(line))
         L.append("")
     if errors:
         L.append("## 异常与缺失")
@@ -85,6 +120,41 @@ def write_minimal_log(rows_list, data_date, run_at, errors):
         L.append("")
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         fh.write("\n".join(L))
+
+
+def _tencent_bars(etf, qfq=True):
+    """东财 K 线失败时的备用日线：腾讯行情（成交额用成交量×收盘价估算）。"""
+    code = etf["code"]
+    symbol = ("sh" if code[0] == "6" else "sz") + code
+    params = {"param": "{},day,2019-01-01,2026-12-31,1900,{}".format(
+        symbol, "qfq" if qfq else "")}
+    raw = feed.http_get("https://web.ifzq.gtimg.cn/appstock/app/fqkline/get",
+                        params, timeout=25)
+    node = ((json.loads(raw).get("data") or {}).get(symbol) or {})
+    rows = (node.get("qfqday") if qfq else node.get("day")) or node.get("day") or []
+    out = []
+    for r in rows:
+        try:
+            close = float(r[2])
+            vol = float(r[5])
+        except (IndexError, TypeError, ValueError):
+            continue
+        out.append({"date": r[0], "close": close, "amount": vol * 100.0 * close})
+    if not out:
+        raise RuntimeError("腾讯日线为空 {}".format(symbol))
+    return out
+
+
+def bars_of(fetcher, etf, fqt, errors):
+    """先走东财（带重试），失败再退腾讯，保证两只标的都能出数据。"""
+    try:
+        return _retry(fetcher.bars, etf["secid"], fqt)
+    except Exception as exc:
+        errors.append("{} {} 东财日线失败，改用腾讯行情（成交额为估算）：{}".format(
+            etf["code"], etf["short"], str(exc).strip()[:120]))
+        print("[WARN] {} 东财日线失败，退腾讯：{}".format(etf["code"], exc),
+              file=sys.stderr, flush=True)
+        return _tencent_bars(etf, qfq=(fqt == 1))
 
 
 def main():
@@ -114,8 +184,8 @@ def main():
     all_series, payload, alerts_map, etf_states, bars_map = [], [], {}, [], {}
     for etf in cfg["etfs"]:
         try:
-            bars = _retry(fetcher.bars, etf["secid"], 1)
-            raw_bars = _retry(fetcher.bars, etf["secid"], 0)
+            bars = bars_of(fetcher, etf, 1, errors)
+            raw_bars = bars_of(fetcher, etf, 0, errors)
             need_from = (now - timedelta(days=windows["nav_lookback_days"])).strftime("%Y-%m-%d")
             nav = _retry(fetcher.nav, etf["code"], need_from)
             shares = fetcher.shares(etf["code"], etf["secid"], bars[-1]["date"])
@@ -196,12 +266,15 @@ def main():
         for a in alerts_map.get(etf["code"], []):
             merged_alerts.append(dict(a, title="{}：{}".format(etf["short"], a["title"])))
     cov_lines = coverage_lines(etf_states)
-    try:
-        report.write_log(ROOT, all_series, merged_alerts, data_date, run_at, errors, cov_lines, etf_states)
-    except Exception as exc:
-        errors.append("八节日志渲染失败（可能只有单只标的成功）：{}".format(exc))
-        print("[WARN] 日志渲染失败：{}".format(exc), file=sys.stderr, flush=True)
-        write_minimal_log(all_series, data_date, run_at, errors)
+    if len(all_series) >= 2:
+        try:
+            report.write_log(ROOT, all_series, merged_alerts, data_date, run_at, errors, cov_lines, etf_states)
+        except Exception as exc:
+            errors.append("八节日志渲染失败：{}".format(exc))
+            print("[WARN] 日志渲染失败：{}".format(exc), file=sys.stderr, flush=True)
+            write_minimal_log(all_series, data_date, run_at, errors, cov_lines, tiers)
+    else:
+        write_minimal_log(all_series, data_date, run_at, errors, cov_lines, tiers)
     repo = os.environ.get("GITHUB_REPOSITORY", "xhxie123-maker/dividend-lowvol-score")
     try:
         report.write_dashboard(ROOT, all_series, alerts_map, data_date, run_at, repo, scores, cov_lines)
