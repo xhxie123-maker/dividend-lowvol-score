@@ -143,6 +143,23 @@ def _tencent_secid(secid, qfq=True):
         out.append({"date": r[0], "close": close, "amount": vol * 100.0 * close})
     if not out:
         raise RuntimeError("腾讯日线为空 {}".format(symbol))
+    if qfq and len(out) < 900:
+        # 腾讯前复权只回放约 640 根，历史不足会压缩分位窗口；
+        # 用不复权长序列按复权起点比例向前补齐，保证边界连续。
+        try:
+            raw_bars = _tencent_secid(secid, qfq=False)
+        except Exception:
+            raw_bars = []
+        qstart = out[0]["date"]
+        raw_by = {b["date"]: b for b in raw_bars}
+        base_raw = (raw_by.get(qstart) or {}).get("close")
+        if raw_bars and base_raw:
+            factor = out[0]["close"] / base_raw
+            head = [{"date": b["date"], "close": b["close"] * factor,
+                     "amount": b["amount"]}
+                    for b in raw_bars if b["date"] < qstart]
+            if head:
+                out = head + out
     return out
 
 
