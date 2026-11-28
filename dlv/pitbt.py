@@ -21,6 +21,7 @@ from .action import action_of, tiers_of
 from .model import stdev
 
 KLINE_URL = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
+SINA_KLINE = "https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData"
 _KCACHE = {}
 
 TIER_W = {"A": 0.85, "B": 0.60, "C": 0.40, "D": 0.20, "E": 0.05}
@@ -56,18 +57,31 @@ def klines(secid):
     """取带开盘价的日线（feed.bars 只保留收盘价，这里单独再取一次）。"""
     if secid in _KCACHE:
         return _KCACHE[secid]
-    code = secid.split(".")[-1]
-    symbol = ("sh" if code[0] == "6" else "sz") + code
+    market, code = (secid.split(".") + [""])[:2]
+    # 东财 secid：1=沪市、0=深市；不能按代码首位猜（515450/563020 都是沪市 ETF）
+    symbol = ("sh" if market == "1" else "sz") + code
     out = []
     try:
         raw = feed.http_get("https://web.ifzq.gtimg.cn/appstock/app/fqkline/get",
                             {"param": "{},day,2019-01-01,2026-12-31,1700,".format(symbol)},
                             timeout=20)
-        node = ((json.loads(raw).get("data") or {}).get(symbol) or {})
-        for r in (node.get("day") or node.get("qfqday") or []):
-            out.append({"date": r[0], "open": float(r[1]), "close": float(r[2])})
+        if raw.lstrip().startswith("{"):   # 腾讯偶发 WAF 501 页面，非 JSON 直接跳过
+            node = ((json.loads(raw).get("data") or {}).get(symbol) or {})
+            for r in (node.get("day") or node.get("qfqday") or []):
+                out.append({"date": r[0], "open": float(r[1]), "close": float(r[2])})
+        else:
+            print("[WARN] 腾讯开盘价返回非 JSON {}，转新浪".format(symbol), flush=True)
     except Exception as exc:
         print("[WARN] 腾讯开盘价失败 {}：{}".format(symbol, exc), flush=True)
+    if not out:
+        try:
+            raw = feed.http_get(SINA_KLINE, {
+                "symbol": symbol, "scale": 240, "ma": "no", "datalen": 1900}, timeout=20)
+            for x in (json.loads(raw) or []):
+                out.append({"date": x["day"], "open": float(x["open"]),
+                            "close": float(x["close"])})
+        except Exception as exc:
+            print("[WARN] 新浪开盘价失败 {}：{}".format(symbol, exc), flush=True)
     if not out:
         try:
             raw = feed.http_get(KLINE_URL, {
