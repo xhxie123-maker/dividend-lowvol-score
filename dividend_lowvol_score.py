@@ -15,7 +15,7 @@ import time
 from datetime import datetime, timedelta
 
 from dlv import backtest as bt
-from dlv import feed, model, pit, pitbt, pxfix, report
+from dlv import feed, model, pit, pitbt, pxfix, report, upgrade
 from dlv.action import action_of
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -340,6 +340,9 @@ def main():
             print("[OK] 回测报告 {}".format(os.path.relpath(path, ROOT)), flush=True)
             path2 = pitbt.write(ROOT, all_series, bars_map, bench, cfg["rating_bands"], data_date, tiers)
             print("[OK] 执行口径回测 {}".format(os.path.relpath(path2, ROOT)), flush=True)
+            p3 = upgrade.write(ROOT, all_series, bars_map, bench, data_date,
+                               cfg["rating_bands"], tiers)
+            print("[OK] 升级检验 {}".format(os.path.relpath(p3, ROOT)), flush=True)
         except Exception as exc:
             errors.append("回测失败：{}".format(exc))
             print("[ERR] 回测 {}".format(exc), file=sys.stderr, flush=True)
