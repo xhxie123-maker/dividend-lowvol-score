@@ -23,7 +23,7 @@ import math
 import os
 
 from .action import action_of, tiers_of
-from .model import DIMENSIONS, stdev
+from .model import DIMENSIONS, pct_rank, stdev
 from .pitbt import TIER_W, boot_ci, klines
 
 H = 60            # 因子体检的前瞻窗口（交易日）
@@ -188,6 +188,52 @@ def _verdict(s_tr, n_tr, s_oo, n_oo):
 def calibration(fh):
     """训练段方向为负的子项取反向分；其余保持正向（不做无依据的翻转）。"""
     return {f["key"]: (-1.0 if f["verdict"] == "方向相反" else 1.0) for f in fh}
+
+
+# ---------------------------------------------------------------------------
+# 一·五、旧口径（无风格项）复算，用于「加与不加」对比
+# ---------------------------------------------------------------------------
+LEGACY_DIMS = [
+    (20, [("cur_yield", 6), ("avg3_yield", 5), ("yield_pct5", 4), ("spread", 3),
+          ("fwd_yield", 2)]),
+    (20, [("consec_years", 4), ("payout", 4), ("fcf_cover", 5), ("dps_growth", 4),
+          ("stability", 3)]),
+    (20, [("vol20", 3), ("vol60", 4), ("vol120", 4), ("vol250", 3), ("mdd250", 4),
+          ("downside", 2)]),
+    (15, [("pe_pct", 5), ("pb_pct", 5), ("erp", 5)]),
+    (15, [("roe", 3), ("roic", 3), ("ocf_np", 3), ("debt_ratio", 2), ("np_stability", 2),
+          ("interest_cover", 2)]),
+    (10, [("bond10y", 2), ("rs", 2), ("flow", 2), ("mkt_vol", 2), ("crowding", 2)]),
+]
+
+
+def legacy_score(rows, window=1250, rs_old=True, key="score_legacy"):
+    """按改版前的 30 项权重重算总分（rs 用旧的 20/60 日均值口径，无风格项）。
+
+    rs_old=False 时保留新 rs（120 日慢变量），用于把「改 rs」与「加风格项」拆开看。
+    """
+    blend = [None if (r.get("excess20") is None or r.get("excess60") is None)
+             else (r["excess20"] + r["excess60"]) / 2.0 for r in rows]
+    rs_old_series = [pct_rank(blend, i, window, 1, 120) for i in range(len(rows))]
+    for i, r in enumerate(rows):
+        sub = dict(r.get("sub") or {})
+        if rs_old:
+            sub["rs"] = rs_old_series[i]
+        acc, tw = 0.0, 0.0
+        for dw, items in LEGACY_DIMS:
+            sacc, stw = 0.0, 0.0
+            for k, w in items:
+                v = sub.get(k)
+                if v is None:
+                    continue
+                sacc += w * v
+                stw += w
+            if stw == 0:
+                continue
+            acc += dw * (sacc / stw)
+            tw += dw
+        r[key] = None if tw == 0 else acc / tw
+    return rows
 
 
 def rescore(rows, sign):
@@ -391,7 +437,16 @@ def style_state():
         return (cd[common[-1]] / cd[common[-1 - k]] - 1.0) - \
                (cg[common[-1]] / cg[common[-1 - k]] - 1.0)
 
+    blend = 0.5 * rel(20) + 0.5 * rel(60)
+    ser = [((cd[d] / cd[common[i - 20]] - 1.0) - (cg[d] / cg[common[i - 20]] - 1.0)) * 0.5 +
+           ((cd[d] / cd[common[i - 60]] - 1.0) - (cg[d] / cg[common[i - 60]] - 1.0)) * 0.5
+           for i, d in enumerate(common) if i >= 60]
+    pct = None
+    if len(ser) >= 250:
+        win = ser[-1250:]
+        pct = 100.0 * sum(1 for v in win if v <= blend) / float(len(win))
     return {"date": common[-1], "rel20": rel(20), "rel60": rel(60),
+            "blend": blend, "pct": pct,
             "ratio60": (cd[common[-1]] / cg[common[-1]]) /
                        (cd[common[-61]] / cg[common[-61]]) - 1.0}
 
@@ -457,8 +512,106 @@ def write(root, series, bars_map, bench, data_date, cfg_bands, cfg_tiers):
     L += ["", "判定：只有校准分在**样本外**同时改善收益与回撤，才值得替换上线；否则保留原始分。"
           "样本外不到两年，改善幅度小的一律视为噪声。", ""]
 
-    # 三、纪律
-    L += ["## 三、纪律降频与迟滞（同一成交口径）", "",
+    # 三、加与不加风格项
+    for etf, rows in series:
+        legacy_score(rows, rs_old=True, key="score_legacy")
+        legacy_score(rows, rs_old=False, key="score_legacy_rs120")
+    L += ["## 三、风格项加与不加（同一成交口径对比）", "",
+          "三臂拆解：新口径（风格项 3 分 + rs 改 120 日）／旧口径（无风格项、rs 用 20/60 日均值）／"
+          "只改 rs（旧权重 + 新 rs），第三臂用来把「加风格项」与「改 rs」的影响分开。", "",
+          "| 标的 | 口径 | 累计 | 年化 | 夏普 | 最大回撤 | 均仓位 | 调仓 | 成本 | 超额 vs 同仓位 | t |",
+          "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+
+    def same_pos(c, d):
+        bh = [d["closes"][x] for x in d["dates"]]
+        bh_rets = {d["dates"][i]: bh[i] / bh[i - 1] - 1.0 for i in range(1, len(bh))}
+        sr = daily_rets(c)
+        keys = [k for k in sr if k in bh_rets]
+        wbar = sum(x[2] for x in c) / float(len(c))
+        cash = (1.0 + RF) ** (1.0 / 250.0) - 1.0
+        ps = pe = 1.0
+        for k in keys:
+            ps *= 1.0 + sr[k]
+            pe *= 1.0 + wbar * bh_rets[k] + (1.0 - wbar) * cash
+        ex = ps / pe - 1.0 if keys else None
+        t = nw_t([sr[k] - wbar * bh_rets[k] - (1.0 - wbar) * cash
+                  for k in keys]) if len(keys) > 30 else None
+        return wbar, ex, t
+
+    cmp_rows, cmp_curves = [], {}
+    arms = (("score", "含风格项（新）"), ("score_legacy", "无风格项（旧）"),
+            ("score_legacy_rs120", "只改 rs（拆解）"))
+    for etf, rows in series:
+        d = ctx[etf["code"]]
+        for key, label in arms:
+            c, sw, ct = discipline(rows, d["dates"], d["opens"], d["closes"], tiers, key=key)
+            if len(c) < 60:
+                continue
+            m = curve_metrics(c)
+            wbar, ex, t = same_pos(c, d)
+            cmp_curves[(etf["code"], key)] = c
+            L.append("| {} | {} | {} | {} | {} | {} | {:.0%} | {} | {} | {} | {} |".format(
+                etf["short"], label, _p(m.get("total")), _p(m.get("cagr")),
+                _n(m.get("sharpe")), _p(m.get("mdd")), wbar, sw, _p(ct, 2, True),
+                _p(ex, 2, True), _n(t)))
+            cmp_rows.append({"code": etf["code"], "mode": key, "total": m.get("total"),
+                             "cagr": m.get("cagr"), "sharpe": m.get("sharpe"),
+                             "mdd": m.get("mdd"), "wbar": wbar, "switches": sw,
+                             "cost": ct, "ex_same": ex, "t": t})
+    L += ["", "读法：三臂只差风格项与 rs 口径，其余子项与成交口径完全相同。"
+          "若「只改 rs」已把超额吃掉大半，问题在 rs 口径而不是风格项；"
+          "若新口径相对「只改 rs」仍继续变差，则风格项本身在拖后腿，应降权或改成只写 history 观察。", ""]
+
+    L += ["### 分年：新口径 − 旧口径，并拆出风格项净贡献", "",
+          "| 标的 | 年份 | 含风格项 | 无风格项 | 差 | 只改 rs | 风格项净贡献 |",
+          "| --- | --- | --- | --- | --- | --- | --- |"]
+    verdict = {}
+    for etf, rows in series:
+        cn = cmp_curves.get((etf["code"], "score"))
+        co = cmp_curves.get((etf["code"], "score_legacy"))
+        cr = cmp_curves.get((etf["code"], "score_legacy_rs120"))
+        if not (cn and co and cr):
+            continue
+        sn = dict((x[0], x[1]) for x in cn)
+        so = dict((x[0], x[1]) for x in co)
+        sr = dict((x[0], x[1]) for x in cr)
+        common = sorted(set(sn) & set(so) & set(sr))
+        yrs = sorted({x[:4] for x in common})
+        better, total = 0, 0
+        worst = None
+        for yr in yrs:
+            ks = [k for k in common if k[:4] == yr]
+            if len(ks) < 20:
+                continue
+            pn = sn[ks[-1]] / sn[ks[0]] - 1.0
+            po = so[ks[-1]] / so[ks[0]] - 1.0
+            pr = sr[ks[-1]] / sr[ks[0]] - 1.0
+            net = pn - pr
+            total += 1
+            if net > 0:
+                better += 1
+            if worst is None or net < worst[1]:
+                worst = (yr, net)
+            L.append("| {} | {} | {} | {} | {} | {} | {} |".format(
+                etf["short"], yr, _p(pn), _p(po), _p(pn - po, 2, True), _p(pr),
+                _p(net, 2, True)))
+        verdict[etf["code"]] = (etf["short"], better, total, worst)
+    L += ["", "注：分年按年内首末净值计算，样本不足 20 个交易日的年份略去。"
+          "「风格项净贡献」＝含风格项 − 只改 rs，即扣掉 rs 口径变化后风格项自己带来的部分。", ""]
+
+    if verdict:
+        parts = []
+        for code, (short, better, total, worst) in verdict.items():
+            parts.append("{} {} 年中 {} 年为正，最差 {} 年 {}（{}）".format(
+                short, total, better, worst[0], _p(worst[1], 2, True), code))
+        L += ["**门槛结论**：{}。".format("；".join(parts)),
+              "按上线前设定的四条门槛（体检两段同向、同仓位超额 t 不下降且分年 ≥2/3 年不差、"
+              "30 日内跨档 ≤2 次、live 覆盖 ≥95%），风格项当前**未过**业绩门槛——"
+              "已按用户要求上线 3 分并保留拥挤闸，但每份升级报告都会重跑本节，"
+              "若后续仍不改善，回退条件是把权重降到 1.5 分或改为只写 history 的 `score_style` 观察值。", ""]
+
+    # 四、纪律
+    L += ["## 四、纪律降频与迟滞（同一成交口径）", "",
           "| 标的 | 纪律 | 累计 | 年化 | 夏普 | 最大回撤 | 日胜率 vs 持有 | 均仓位 | 超额 vs 等权(100%) | 超额 vs 同仓位 | t vs 同仓位 | 调仓 | 成本 |",
           "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
     variants = [("日频跟随（现状）", dict(mode="daily")),
@@ -513,7 +666,7 @@ def write(root, series, bars_map, bench, data_date, cfg_bands, cfg_tiers):
           "其余现金按 1.5% 计息，两者之差才是分数择时本身贡献的部分。", ""]
 
     # 四、基准
-    L += ["## 四、基准对照（同窗口）", "",
+    L += ["## 五、基准对照（同窗口）", "",
           "| 口径 | 累计 | 年化 | 夏普 | 最大回撤 |", "| --- | --- | --- | --- | --- |"]
     m_ew = curve_metrics(ew) if ew else {}
     if m_ew:
@@ -537,13 +690,16 @@ def write(root, series, bars_map, bench, data_date, cfg_bands, cfg_tiers):
             L.append("| 沪深300（同起点） | {} | {} | {} | {} |".format(
                 _p(eq[-1] - 1.0), _p(eq[-1] ** (250.0 / len(eq)) - 1.0),
                 _n(_sharpe(rets)), _p(_mdd(eq))))
-    L += ["", "结论：与“100% 等权持有两只”相比，纪律调仓在扣完成本后大幅落后，但差距主要来自平均仓位只有 35%–41%，"
-          "不是分数判错方向；把仓位差剔除后（超额 vs 同仓位），南方有 +4%~+9% 的小幅正超额、易方达为负，"
-          "而 t 值全在 ±1.2 以内，两段都不显著。因此这套分数目前的定位是**配置温度计**"
-          "（决定两只之间分多少预算、什么时候整体降仓），不是择时信号发生器。", ""]
+    new_arm = {r["code"]: r for r in cmp_rows if r["mode"] == "score"}
+    detail = "；".join("{} {}".format(short, _p(new_arm[c]["ex_same"], 2, True))
+                       for c, (short, _b, _t, _w) in verdict.items() if c in new_arm)
+    L += ["", "结论：与“100% 等权持有两只”相比，纪律调仓在扣完成本后大幅落后，但差距主要来自平均仓位只有 35%–42%，"
+          "不是分数判错方向；把仓位差剔除后（超额 vs 同仓位），新口径下{}，t 值全部落在 ±1.6 以内，"
+          "两段都不显著。因此这套分数目前的定位是**配置温度计**"
+          "（决定两只之间分多少预算、什么时候整体降仓），不是择时信号发生器。".format(detail or "—"), ""]
 
     # 五、分年
-    L += ["## 五、分年收益（日频跟随 vs 买入持有）", "",
+    L += ["## 六、分年收益（日频跟随 vs 买入持有）", "",
           "| 标的 | 年份 | 纪律调仓 | 买入持有 | 差 |", "| --- | --- | --- | --- | --- |"]
     for etf, rows in series:
         d = ctx[etf["code"]]
@@ -562,15 +718,18 @@ def write(root, series, bars_map, bench, data_date, cfg_bands, cfg_tiers):
 
     # 六、风格
     st = style_state()
-    L += ["", "## 六、风格环境参考（不进评分）", ""]
+    L += ["", "## 七、风格环境（已接入评分）", ""]
     if st.get("error"):
         L.append("- 指数数据不可用：{}".format(st["error"]))
     else:
-        L.append("- 中证红利(000922) 相对 沪深300成长(000918)：20 日多空 {}，60 日多空 {}，60 日比值 {}（{}）".format(
-            _p(st.get("rel20"), 2, True), _p(st.get("rel60"), 2, True),
-            _p(st.get("ratio60"), 2, True), st.get("date")))
+        L.append("- 中证红利(000922) 相对 沪深300成长(000918)：20 日多空 {}，60 日多空 {}，"
+                 "混合信号 {}（5 年分位 {}），60 日比值 {}（{}）".format(
+                     _p(st.get("rel20"), 2, True), _p(st.get("rel60"), 2, True),
+                     _p(st.get("blend"), 2, True), _n(st.get("pct"), 1),
+                     _p(st.get("ratio60"), 2, True), st.get("date")))
         L.append("- 读数：60 日多空为负＝成长占优，红利低波这种防御资产通常在此阶段跑输；为正＝防御占优。"
-                 "该项只解释“为什么分数此刻容易失灵”，不参与打分。")
+                 "该信号已作为市场环境维度的 3 分子项（顺向分位）；分位 > 85 时封顶 40 分，"
+                 "避免风格极度拥挤时继续给高分。")
     bond = None
     for etf, rows in series:
         for r in reversed(rows):
@@ -583,12 +742,13 @@ def write(root, series, bars_map, bench, data_date, cfg_bands, cfg_tiers):
         L.append("- 10Y 国债收益率 {}%，红利低波带债性，利率快速上行时估值项容易失真。".format(_n(bond, 3)))
 
     # 七、局限
-    L += ["", "## 七、局限与后续", "",
+    L += ["", "## 八、局限与后续", "",
           "- 样本 2020 起（563020 自 2023-12），训练约 5 年、样本外不到 2 年；"
           "任何“样本外有效”只能是弱证据。",
           "- 非重叠抽样把独立样本压到每段十几二十个，多数子项只能判“样本不足”，这是数据事实，不是脚本问题。",
           "- 指数层十年回测需历史成分与权重，免费源不提供，仍未做。",
-          "- 待办：① 校准分若样本外占优再考虑上线反向计分；② 红利/成长相对强弱做成打分项需重分权重，先观察一个季度；"
+          "- 待办：① 校准分若样本外占优再考虑上线反向计分；② 红利/成长相对强弱已按 A 方案上线（3 分权重 + 拥挤闸），"
+          "需观察一个季度：若第三节「加与不加」同仓位超额与 t 均无改善、换手明显上升，则降权回 1.5 分或改为只写 history 观察；"
           "③ 真实 ROIC 与股东回报（回购+分红）需更细财报字段；④ 组合层（两只之间分配）单独做一次权重优化。", ""]
 
     path = os.path.join(root, "backtest", "upgrade.md")
@@ -609,4 +769,8 @@ def write(root, series, bars_map, bench, data_date, cfg_bands, cfg_tiers):
         for r in calib:
             w.writerow(["calib", r["code"], r["mode"], r["total"], r["oos_total"],
                         r["oos_sharpe"], r["oos_mdd"], r["switches"], ""])
+        for r in cmp_rows:
+            w.writerow(["style_ab", r["code"], r["mode"], r["total"], r["cagr"],
+                        r["sharpe"], r["mdd"], r["ex_same"],
+                        "" if r["t"] is None else round(r["t"], 3)])
     return path

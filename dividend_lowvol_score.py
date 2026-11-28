@@ -222,6 +222,13 @@ def main():
     bond = fetcher.bond10y()
     if not bond:
         errors.append("10 年期国债收益率未取到，股债收益差与股权风险溢价按缺失处理")
+    style = {}
+    try:
+        style = model.style_map(upgrade.index_klines("1.000922"),
+                                upgrade.index_klines("1.000918"))
+    except Exception as exc:
+        errors.append("红利/成长指数不可用，风格子项按缺失处理：{}".format(str(exc)[:100]))
+        print("[WARN] 风格指数失败：{}".format(exc), file=sys.stderr, flush=True)
 
     all_series, payload, alerts_map, etf_states, bars_map = [], [], {}, [], {}
     for etf in cfg["etfs"]:
@@ -239,7 +246,7 @@ def main():
             pe_map = {d: rec["pe"] for d, rec in fin.items() if rec.get("pe")}
             pb_map = {d: rec["pb"] for d, rec in fin.items() if rec.get("pb")}
             rows = model.build_series(etf, bars, raw_bars, nav, shares, bench,
-                                      {"bond": bond, "pe": pe_map, "fin": fin}, windows)
+                                      {"bond": bond, "pe": pe_map, "fin": fin, "style": style}, windows)
             for r in rows:
                 r["pb"] = pb_map.get(r["date"])
             pit.fix_dividends(rows, nav)

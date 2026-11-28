@@ -40,26 +40,26 @@ DIMENSIONS = [
         ("mdd250", "最大回撤", 4, "live"),
         ("downside", "下行波动率", 2, "live"),
     ]),
-    ("valuation", "估值合理性", 15, [
-        ("pe_pct", "PE 历史分位数", 4, "live"),
+    ("valuation", "估值合理性", 14, [
+        ("pe_pct", "PE 历史分位数", 5, "live"),
         ("pb_pct", "PB 历史分位数", 4, "missing"),
-        ("yield_pct_val", "股息率历史分位数", 4, "live"),
-        ("erp", "股权风险溢价", 3, "live"),
+        ("erp", "股权风险溢价", 5, "live"),
     ]),
-    ("financial", "盈利与财务质量", 15, [
+    ("financial", "盈利与财务质量", 14, [
         ("roe", "ROE", 3, "proxy"),
         ("roic", "ROIC", 3, "proxy"),
-        ("ocf_np", "经营现金流/净利润", 3, "proxy"),
+        ("ocf_np", "经营现金流/净利润", 2.5, "proxy"),
         ("debt_ratio", "资产负债率", 2, "proxy"),
-        ("np_stability", "净利润增长稳定性", 2, "proxy"),
+        ("np_stability", "净利润增长稳定性", 1.5, "proxy"),
         ("interest_cover", "利息保障倍数", 2, "proxy"),
     ]),
-    ("market_env", "市场环境与资金趋势", 10, [
+    ("market_env", "市场环境与资金趋势", 12, [
         ("bond10y", "10 年期国债收益率", 2, "live"),
-        ("rs", "红利低波相对强弱", 2, "live"),
+        ("rs", "红利低波相对强弱", 1.5, "live"),
         ("flow", "ETF 资金流向", 2, "live"),
         ("mkt_vol", "市场整体波动率", 2, "live"),
-        ("crowding", "红利风格拥挤度", 2, "proxy"),
+        ("crowding", "红利风格拥挤度", 1.5, "proxy"),
+        ("style_rel", "红利/成长相对强弱", 3, "live"),
     ]),
 ]
 
@@ -140,6 +140,20 @@ def consec_div_years(yearly_div):
 # ---------------------------------------------------------------------------
 # 序列构建
 # ---------------------------------------------------------------------------
+def style_map(div_bars, grw_bars):
+    """红利(000922) vs 成长(000918) 相对强弱：0.5×20 日 + 0.5×60 日超额。"""
+    cd = {b["date"]: b["close"] for b in div_bars if b.get("close")}
+    cg = {b["date"]: b["close"] for b in grw_bars if b.get("close")}
+    common = sorted(set(cd) & set(cg))
+    out = {}
+    for i in range(60, len(common)):
+        d = common[i]
+        r20 = (cd[d] / cd[common[i - 20]] - 1.0) - (cg[d] / cg[common[i - 20]] - 1.0)
+        r60 = (cd[d] / cd[common[i - 60]] - 1.0) - (cg[d] / cg[common[i - 60]] - 1.0)
+        out[d] = 0.5 * r20 + 0.5 * r60
+    return out
+
+
 def build_series(etf, bars, raw_bars, nav, shares, bench, ext, windows):
     """ext: {'bond': {date:yield}, 'pe': {date:pe}, 'fin': {date:{...}}}"""
     dates = [b["date"] for b in bars]
@@ -157,6 +171,8 @@ def build_series(etf, bars, raw_bars, nav, shares, bench, ext, windows):
     pe_sorted = sorted(ext.get("pe") or {})
     pe_map = ext.get("pe") or {}
     fin_map = ext.get("fin") or {}
+    style_map = ext.get("style") or {}
+    style_dates = sorted(style_map)
     bench_map = {b["date"]: b["close"] for b in bench}
     bench_dates = sorted(bench_map)
     bench_amount = {b["date"]: b["amount"] for b in bench}
@@ -193,6 +209,7 @@ def build_series(etf, bars, raw_bars, nav, shares, bench, ext, windows):
         row["dd250"] = closes[i] / max(closes[max(0, i - 249):i + 1]) - 1.0
         row["r20"] = closes[i] / closes[i - 20] - 1.0 if i >= 20 else None
         row["r60"] = closes[i] / closes[i - 60] - 1.0 if i >= 60 else None
+        row["r120"] = closes[i] / closes[i - 120] - 1.0 if i >= 120 else None
         row["amount20"] = sum(amounts[i - 19:i + 1]) / 20.0 if i >= 20 else None
 
         kb = bisect.bisect_right(bond_sorted, d) - 1
@@ -204,6 +221,12 @@ def build_series(etf, bars, raw_bars, nav, shares, bench, ext, windows):
                                  / max(1, min(20, kb2 + 1))) if kb2 >= 0 else None
         kv = bisect.bisect_right(bench_vol_dates, d) - 1
         row["mkt_vol"] = bench_vol_map[bench_vol_dates[kv]] if kv >= 0 else None
+        row["bench_r120"] = (bench_closes_seq[kb2] / bench_closes_seq[kb2 - 120] - 1.0) \
+            if kb2 >= 120 else None
+        row["excess120"] = (None if (row["r120"] is None or row["bench_r120"] is None)
+                            else row["r120"] - row["bench_r120"])
+        kn = bisect.bisect_right(style_dates, d) - 1
+        row["style_rel"] = style_map[style_dates[kn]] if kn >= 0 else None
 
         sv = shares.get(d)
         row["shares"] = sv
@@ -292,6 +315,20 @@ def build_series(etf, bars, raw_bars, nav, shares, bench, ext, windows):
 # ---------------------------------------------------------------------------
 # 评分
 # ---------------------------------------------------------------------------
+def style_score(series, i, window, windows):
+    """红利/成长相对强弱子项：趋势分位 + 拥挤闸。
+
+    顺向：红利 60 日越强于成长，分数越高（红利占优阶段本 ETF 通常跑赢）。
+    拥挤闸：分位 > crowd_pct 时封顶 crowd_cap，避免在风格极度拥挤时继续给高分。
+    """
+    p = pct_rank(series, i, window, 1, 120)
+    if p is None:
+        return None
+    if p > windows.get("style_crowd_pct", 85.0):
+        return min(p, windows.get("style_crowd_cap", 40.0))
+    return p
+
+
 def score_series(rows, windows):
     win = windows["percentile_window"]
     short = windows["short_window"]
@@ -310,8 +347,8 @@ def score_series(rows, windows):
 
     vols = {k: col(k) for k in ("vol20", "vol60", "vol120", "vol250", "mdd250", "downside250")}
     fin = {k: col("fin_" + k) for k in ("roe", "roa", "ocf_np", "icr", "debt", "np_growth", "payout", "np_stab")}
-    rs_series = [None if (r["excess20"] is None or r["excess60"] is None)
-                 else (r["excess20"] + r["excess60"]) / 2.0 for r in rows]
+    rs_series = col("excess120")
+    style_series = col("style_rel")
     flow = col("flow20")
     crowd = [None if (r.get("amount20") is None or r.get("bench_amount20") in (None, 0))
              else r["amount20"] / r["bench_amount20"] for r in rows]
@@ -360,6 +397,7 @@ def score_series(rows, windows):
         sub["flow"] = pct_rank(flow, idx, win, 1, 60)
         sub["mkt_vol"] = pct_rank(mvol_series, idx, win, -1, 120)
         sub["crowding"] = pct_rank(crowd, idx, win, -1, 120)
+        sub["style_rel"] = style_score(style_series, idx, win, windows)
 
         dims, cov, missing = {}, {}, []
         for key, name, dw, subs in DIMENSIONS:

@@ -478,7 +478,7 @@ def fix_dividends(rows, nav):
 # ---------------------------------------------------------------------------
 VALUATION_SUBS = [
     ("pe_pct", "PE 历史分位数（持仓加权）", 5, "live"),
-    ("pb_pct", "PB 历史分位数（持仓加权）", 5, "live"),
+    ("pb_pct", "PB 历史分位数（持仓加权）", 4, "live"),
     ("erp", "股权风险溢价（EP − 10Y）", 5, "live"),
 ]
 
@@ -487,7 +487,7 @@ def patch_dimensions():
     """估值维度去掉与股息吸引力重复的股息率分位；财务子项名称按真实口径重写。"""
     for i, (key, name, dw, subs) in enumerate(model.DIMENSIONS):
         if key == "valuation":
-            model.DIMENSIONS[i] = ("valuation", "估值合理性", 15, list(VALUATION_SUBS))
+            model.DIMENSIONS[i] = ("valuation", "估值合理性", 14, list(VALUATION_SUBS))
         elif key == "financial":
             new = []
             for sk, sn, sw, st in subs:

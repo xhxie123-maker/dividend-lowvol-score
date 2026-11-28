@@ -34,15 +34,17 @@
     "div_attraction": 20,
     "div_quality": 20,
     "low_risk": 20,
-    "valuation": 15,
-    "financial": 15,
-    "market_env": 10
+    "valuation": 14,
+    "financial": 14,
+    "market_env": 12
   },
   "windows": {
     "percentile_window": 1250,
     "short_window": 250,
     "backfill_days": 260,
-    "nav_lookback_days": 1650
+    "nav_lookback_days": 1650,
+    "style_crowd_pct": 85,
+    "style_crowd_cap": 40
   },
   "rating_bands": [
     {
