@@ -1,5 +1,5 @@
 {
-  "run_at": "2026-11-27 17:27",
+  "run_at": "2026-11-28 12:45",
   "data_date": "2026-11-27",
   "etfs": [
     {
@@ -7,7 +7,7 @@
       "name": "南方标普中国A股大盘红利低波50ETF",
       "short": "南方红利低波",
       "index": "标普中国A股大盘红利低波50指数",
-      "score": 51.95,
+      "score": 52.06,
       "rating": "中性偏谨慎",
       "coverage": 0.96,
       "data_date": "2026-11-27",
@@ -22,7 +22,7 @@
           "key": "div_attraction",
           "name": "股息吸引力",
           "weight": 20,
-          "score": 53.38,
+          "score": 53.32,
           "coverage": 1.0,
           "subs": [
             {
@@ -51,7 +51,7 @@
               "name": "股债收益差",
               "weight": 3,
               "status": "live",
-              "score": 45.38
+              "score": 44.95
             },
             {
               "key": "fwd_yield",
@@ -161,7 +161,7 @@
           "key": "valuation",
           "name": "估值合理性",
           "weight": 15,
-          "score": 13.15,
+          "score": 14.12,
           "coverage": 1.0,
           "subs": [
             {
@@ -169,21 +169,21 @@
               "name": "PE 历史分位数（持仓加权）",
               "weight": 5,
               "status": "live",
-              "score": 2.16
+              "score": 2.88
             },
             {
               "key": "pb_pct",
               "name": "PB 历史分位数（持仓加权）",
               "weight": 5,
               "status": "live",
-              "score": 26.32
+              "score": 26.8
             },
             {
               "key": "erp",
               "name": "股权风险溢价（EP − 10Y）",
               "weight": 5,
               "status": "live",
-              "score": 10.97
+              "score": 12.69
             }
           ]
         },
@@ -242,7 +242,7 @@
           "key": "market_env",
           "name": "市场环境与资金趋势",
           "weight": 10,
-          "score": 52.22,
+          "score": 52.0,
           "coverage": 0.8,
           "subs": [
             {
@@ -250,7 +250,7 @@
               "name": "10 年期国债收益率",
               "weight": 2,
               "status": "live",
-              "score": 98.06
+              "score": 97.2
             },
             {
               "key": "rs",
@@ -289,12 +289,6 @@
           "title": "最大回撤恶化",
           "detail": "250 日区间最大回撤 -11.02%，超 -10% 观察线",
           "kind": "drawdown"
-        },
-        {
-          "level": "中",
-          "title": "ETF 折溢价异常",
-          "detail": "当日折溢价 -1.07%，超 ±1% 阈值",
-          "kind": "premium"
         }
       ],
       "metrics": {
@@ -302,9 +296,9 @@
         "close": 1.499,
         "close_raw": 1.499,
         "amount": 523018059.0,
-        "nav": 1.5152,
-        "nav_date": "2026-11-26",
-        "premium": -0.010692,
+        "nav": 1.5003,
+        "nav_date": "2026-11-27",
+        "premium": -0.000866,
         "ttm_div": 0.08,
         "ttm_yield": 0.053369,
         "vol20": 0.140932,
@@ -317,12 +311,12 @@
         "r20": 0.034507,
         "r60": 0.098974,
         "amount20": 327662062.35,
-        "bond10y": 1.5912,
+        "bond10y": 1.5972,
         "bench_amount20": 469715625456.445,
         "mkt_vol": 0.199621,
-        "shares": 13615835136.0,
+        "shares": 13652335104.0,
         "flow20": null,
-        "pe": 13.743863,
+        "pe": 13.628875,
         "fin_roe": 9.997321,
         "fin_roa": 4.709599,
         "fin_ocf_np": 0.85688,
@@ -337,12 +331,12 @@
         "consec_years": 4,
         "dps_growth": 0.169607,
         "div_cv": 0.419862,
-        "spread": 0.037457,
-        "erp": 0.056848,
+        "spread": 0.037397,
+        "erp": 0.057402,
         "fwd_yield": 0.062421,
         "excess20": 0.015046,
         "excess60": 0.221476,
-        "pb": 1.978002
+        "pb": 1.96472
       }
     },
     {
@@ -350,7 +344,7 @@
       "name": "易方达中证红利低波动ETF",
       "short": "易方达红利低波",
       "index": "中证红利低波动指数（H30269）",
-      "score": 60.14,
+      "score": 60.46,
       "rating": "中性偏积极",
       "coverage": 0.96,
       "data_date": "2026-11-27",
@@ -365,7 +359,7 @@
           "key": "div_attraction",
           "name": "股息吸引力",
           "weight": 20,
-          "score": 58.73,
+          "score": 58.7,
           "coverage": 1.0,
           "subs": [
             {
@@ -394,7 +388,7 @@
               "name": "股债收益差",
               "weight": 3,
               "status": "live",
-              "score": 64.3
+              "score": 64.09
             },
             {
               "key": "fwd_yield",
@@ -504,7 +498,7 @@
           "key": "valuation",
           "name": "估值合理性",
           "weight": 15,
-          "score": 59.62,
+          "score": 61.98,
           "coverage": 1.0,
           "subs": [
             {
@@ -512,21 +506,21 @@
               "name": "PE 历史分位数（持仓加权）",
               "weight": 5,
               "status": "live",
-              "score": 76.59
+              "score": 78.91
             },
             {
               "key": "pb_pct",
               "name": "PB 历史分位数（持仓加权）",
               "weight": 5,
               "status": "live",
-              "score": 30.23
+              "score": 32.4
             },
             {
               "key": "erp",
               "name": "股权风险溢价（EP − 10Y）",
               "weight": 5,
               "status": "live",
-              "score": 72.04
+              "score": 74.62
             }
           ]
         },
@@ -585,7 +579,7 @@
           "key": "market_env",
           "name": "市场环境与资金趋势",
           "weight": 10,
-          "score": 52.69,
+          "score": 52.48,
           "coverage": 0.8,
           "subs": [
             {
@@ -593,7 +587,7 @@
               "name": "10 年期国债收益率",
               "weight": 2,
               "status": "live",
-              "score": 98.06
+              "score": 97.2
             },
             {
               "key": "rs",
@@ -632,12 +626,6 @@
           "title": "最大回撤恶化",
           "detail": "250 日区间最大回撤 -13.38%，超 -10% 观察线",
           "kind": "drawdown"
-        },
-        {
-          "level": "中",
-          "title": "ETF 折溢价异常",
-          "detail": "当日折溢价 -1.17%，超 ±1% 阈值",
-          "kind": "premium"
         }
       ],
       "metrics": {
@@ -645,9 +633,9 @@
         "close": 1.224,
         "close_raw": 1.224,
         "amount": 462591739.0,
-        "nav": 1.2385,
-        "nav_date": "2026-11-26",
-        "premium": -0.011708,
+        "nav": 1.2264,
+        "nav_date": "2026-11-27",
+        "premium": -0.001957,
         "ttm_div": 0.048,
         "ttm_yield": 0.039216,
         "vol20": 0.116106,
@@ -660,12 +648,12 @@
         "r20": 0.0,
         "r60": 0.051546,
         "amount20": 379967592.4,
-        "bond10y": 1.5912,
+        "bond10y": 1.5972,
         "bench_amount20": 469715625456.445,
         "mkt_vol": 0.199621,
-        "shares": 11417910016.0,
+        "shares": 11485910016.0,
         "flow20": null,
-        "pe": 7.887055,
+        "pe": 7.834317,
         "fin_roe": 9.619497,
         "fin_roa": 2.399279,
         "fin_ocf_np": 0.785539,
@@ -680,12 +668,12 @@
         "consec_years": 2,
         "dps_growth": 0.324869,
         "div_cv": 0.081105,
-        "spread": 0.023304,
-        "erp": 0.110878,
+        "spread": 0.023244,
+        "erp": 0.111672,
         "fwd_yield": 0.05098,
         "excess20": -0.019461,
         "excess60": 0.174049,
-        "pb": 1.181006
+        "pb": 1.177709
       }
     }
   ]
